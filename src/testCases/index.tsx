@@ -49,6 +49,8 @@ import { useAppDispatch } from "@/hooks/use-dispatch";
 import { addTestCase, deleteTestCase, editTestCase, fetchTestCases, resetForm, selectError, selectLoading, selectTestCases, type TestCase } from "./reducer/testCaseSlice";
 import { useSelector } from "react-redux";
 import { type Feature } from "@/sidebar/reducer/sidebarSlice";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
 type Priority = "High" | "Medium" | "Low";
 type Status = "Pass" | "Fail" | "Pending";
@@ -62,13 +64,12 @@ export function TestCaseManager({
   features,
   selectedFeature,
 }: TestCaseManagerProps) {
-  console.log('ALL FEATURES::::', features)
-  console.log("SELECTED TEST ID", selectedFeature);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const testCases = useSelector(selectTestCases);
   const [editingTestCase, setEditingTestCase] = useState<TestCase | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [newTestCase, setNewTestCase] = useState({
     id: "",
     description: "",
@@ -170,6 +171,34 @@ const handleEditTestCase = (testCase: TestCase) => {
     }
   };
 
+  const handleExportToPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text('TEST CASES', 14, 20);
+
+  autoTable(doc, {
+    startY: 30,
+    head: [["ID","Feature", "Description", "Priority", "Status"]],
+    body: filteredTestCases.map((tc) => [
+      tc.id,
+      getFeatureName(tc.featureId),
+      tc.description,
+      tc.priority,
+      tc.status,
+    ]),
+    styles: {
+      fontSize: 10,
+      cellPadding: 3,
+    },
+    headStyles: {
+      fillColor: [40, 40, 40],
+    },
+  });
+
+    doc.save("test_cases.pdf");
+    setIsExportDialogOpen(false); // close the dialog after export
+  }
+
   const getFeatureName = (featureId: string) => {
     const feature = features.find((f) => f.id === featureId);
     return feature ? feature.name : "Unknown Feature";
@@ -248,10 +277,28 @@ const handleEditTestCase = (testCase: TestCase) => {
                     <SelectItem value="Pending">Pending</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button variant="outline">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export
-                </Button>
+                <AlertDialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline">
+                        <Download className="h-4 w-4 mr-2" />
+                        Export to PDF
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Confirm Export</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to download the test cases as a PDF?
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleExportToPDF}>
+                          Yes, Download
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
               </div>
             </div>
 
