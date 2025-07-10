@@ -1,7 +1,7 @@
 import type { RootState } from './../../store';
 import { database } from "@/firebase";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { onValue, push, ref, remove, update } from "firebase/database";
+import { push, ref, remove, update } from "firebase/database";
 
 export interface TestCase {
   id: string;
@@ -40,47 +40,6 @@ export const addTestCase = createAsyncThunk(
     }
 )
 
-export const fetchTestCases = createAsyncThunk(
-  'create/fetchTestCases',
-  async (featureId: string | null, { rejectWithValue }) => {
-    try {
-      return new Promise<TestCase[]>((resolve, reject) => {
-        const testCasesRef = ref(database, 'testCases');
-        onValue(
-          testCasesRef,
-          (snapshot) => {
-            const data = snapshot.val();
-            let testCasesArray: TestCase[] = data
-              ? Object.entries(data).map(([key, value]: [string, any]) => ({
-                  id: value.id,
-                  description: value.description,
-                  featureId: value.featureId || value.feature, // Handle legacy 'feature' field
-                  priority: value.priority,
-                  status: value.status,
-                  firebaseId: key,
-                }))
-              : [];
-
-            // Filter test cases by featureId if provided
-            if (featureId) {
-              testCasesArray = testCasesArray.filter(
-                (testCase) => testCase.featureId === featureId
-              );
-            }
-
-            resolve(testCasesArray);
-            console.log("List of test cases:", testCasesArray);
-          },
-          (error) => {
-            reject(rejectWithValue(error.message || 'Failed to fetch test cases'));
-          }
-        );
-      });
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch test cases');
-    }
-  }
-);
 
 //Editing test case 
 export const editTestCase = createAsyncThunk(
@@ -127,6 +86,9 @@ export const createTestSlice = createSlice({
     initialState,
     reducers: {
             resetForm: ()=> initialState,
+            setTestCases: (state, action) => {
+              state.testCase = action.payload;
+            }
     },
     extraReducers: (builders) => {
         builders
@@ -142,19 +104,6 @@ export const createTestSlice = createSlice({
             state.error = action.payload as string;
             state.loading = false;
         })
-        .addCase(fetchTestCases.pending, (state)=>{
-            state.loading = true;
-            state.error = '';
-        })
-        .addCase(fetchTestCases.fulfilled, (state, action)=>{
-            state.error = '';
-            state.loading = false;
-            state.testCase = action.payload;
-        })
-        .addCase(fetchTestCases.rejected, (state, action)=>{
-            state.loading = false;
-            state.error = action.payload as string;
-        })
         .addCase(deleteTestCase.fulfilled, (state, action)=>{
           state.testCase = state.testCase.filter((testCase)=> testCase.id !== action.payload);
         })
@@ -163,7 +112,8 @@ export const createTestSlice = createSlice({
 
 export default createTestSlice.reducer;
 
-export const {resetForm} = createTestSlice.actions;
+export const {resetForm, setTestCases} = createTestSlice.actions;
+
 export const selectLoading = (state: RootState) => state.create.loading;
 export const selectError = (state: RootState) => state.create.error;
 export const selectTestCases = (state: RootState) => state.create.testCase;

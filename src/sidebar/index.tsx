@@ -349,36 +349,51 @@ useEffect(() => {
                     {feature.description}
                   </p>
                   {/* Status Indicators */}
-                  <div className="flex items-center gap-4 text-xs">
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                      <span
-                        className={
-                          selectedFeature === feature.id ? "text-gray-100" : "text-gray-600 dark:text-gray-300"
-                        }
-                      >
-                        {feature.testCounts.passed} passed
-                      </span>
+                  <div className="flex items-center gap-6 text-xs">
+                    <div className="items-center gap-1">
+                      <div className="flex justify-center items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                          <div
+                            className={
+                              selectedFeature === feature.id ? "text-gray-100" : "text-gray-600 dark:text-gray-300"
+                            }
+                          >
+                            {feature.testCounts.passed}
+                            </div>
+                      </div>
+                        <div>
+                         Passed
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                      <span
-                        className={
-                          selectedFeature === feature.id ? "text-gray-100" : "text-gray-600 dark:text-gray-300"
-                        }
-                      >
-                        {feature.testCounts.failed} failed
-                      </span>
+                   <div className="items-center gap-1">
+                      <div className="flex justify-center items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                          <div
+                            className={
+                              selectedFeature === feature.id ? "text-gray-100" : "text-gray-600 dark:text-gray-300"
+                            }
+                          >
+                            {feature.testCounts.failed}
+                            </div>
+                      </div>
+                        <div>
+                         Failed
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-gray-500"></div>
-                      <span
-                        className={
-                          selectedFeature === feature.id ? "text-gray-100" : "text-gray-600 dark:text-gray-300"
-                        }
-                      >
-                        {feature.testCounts.ready} ready
-                      </span>
+                    <div className="items-center gap-1">
+                      <div className="flex justify-center items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                          <div
+                            className={
+                              selectedFeature === feature.id ? "text-gray-100" : "text-gray-600 dark:text-gray-300"
+                            }
+                          >
+                            {feature.testCounts.ready}
+                            </div>
+                      </div>
+                        <div>
+                         Ready
+                      </div>
                     </div>
                   </div>
                 </div>

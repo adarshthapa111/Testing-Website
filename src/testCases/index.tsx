@@ -46,12 +46,14 @@ import {ThemeToggle} from "@/themeToggle/index";
 import {Formik, Form, Field, ErrorMessage} from "formik";
 import * as Yup from "yup";
 import { useAppDispatch } from "@/hooks/use-dispatch";
-import { addTestCase, deleteTestCase, editTestCase, fetchTestCases, resetForm, selectError, selectLoading, selectTestCases, type TestCase } from "./reducer/testCaseSlice";
+import { addTestCase, deleteTestCase, editTestCase, resetForm, selectError, selectLoading, selectTestCases, setTestCases, type TestCase } from "./reducer/testCaseSlice";
 import { useSelector } from "react-redux";
 import { type Feature } from "@/sidebar/reducer/sidebarSlice";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
+import { onValue, ref } from "firebase/database";
+import { database } from "@/firebase";
 type Priority = "High" | "Medium" | "Low";
 type Status = "Pass" | "Fail" | "Pending";
 
@@ -84,9 +86,40 @@ export function TestCaseManager({
   const {toggleSidebar} = useSidebar();
 
   //Fetcch DATA
-  useEffect(()=>{
-    dispatch(fetchTestCases(selectedFeature));
-  }, [dispatch, selectedFeature])
+  useEffect(() => {
+    const testCasesRef = ref(database, "testCases");
+
+    const unsubscribe = onValue(
+      testCasesRef,
+      (snapshot) => {
+        const data = snapshot.val();
+        let testCasesArray: TestCase[] = data
+          ? Object.entries(data).map(([key, value]: [string, any]) => ({
+              id: value.id,
+              description: value.description,
+              featureId: value.featureId || value.feature,
+              priority: value.priority,
+              status: value.status,
+              firebaseId: key,
+            }))
+          : [];
+
+        if (features) {
+          testCasesArray = testCasesArray.filter(
+            (testCase) => testCase.featureId === selectedFeature
+          );
+        }
+
+        dispatch(setTestCases(testCasesArray));
+      },
+      (error) => {
+        // setError(error.message || "Failed to fetch test cases");
+        console.log(error.message || "Failed to fetch test cases")
+      }
+    );
+
+    return () => unsubscribe();
+  }, [selectedFeature]);
 
 
   //SUBMIT FORM FOR ADDING TEST CASE
@@ -254,19 +287,19 @@ const handleEditTestCase = (testCase: TestCase) => {
         <Card className="h-full">
           <CardContent className="p-6">
             {/* Search and Filters */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row gap-4 mb-6 ">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-600 " />
                 <Input
                   placeholder="Search test cases..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 py-6 border border-gray-400"
                 />
               </div>
               <div className="flex gap-2">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-40 py-6 cursor-pointer border border-gray-400">
                     <Filter className="h-4 w-4 mr-2" />
                     <SelectValue />
                   </SelectTrigger>
@@ -278,7 +311,7 @@ const handleEditTestCase = (testCase: TestCase) => {
                   </SelectContent>
                 </Select>
                 <AlertDialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
-                    <AlertDialogTrigger asChild>
+                    <AlertDialogTrigger asChild className="py-6">
                       <Button variant="outline">
                         <Download className="h-4 w-4 mr-2" />
                         Export to PDF
@@ -338,7 +371,7 @@ const handleEditTestCase = (testCase: TestCase) => {
                   <TableBody>
                     {filteredTestCases.map((testCase) => (
                       <TableRow key={testCase.id}>
-                        <TableCell className="font-mono font-medium">
+                        <TableCell className="font-semibold">
                           {testCase.id}
                         </TableCell>
                         <TableCell className="max-w-xs">
@@ -366,6 +399,7 @@ const handleEditTestCase = (testCase: TestCase) => {
                         </TableCell>
                         <TableCell>
                           <Badge
+                          className="p-1"
                             variant={
                               testCase.priority === "High"
                                 ? "destructive"
