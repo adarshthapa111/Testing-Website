@@ -78,7 +78,6 @@ export function TestCaseManager({
     priority: "Medium" as Priority,
     status: "Pending" as Status,
     featureId: "",
-    firebaseId: ""
   });
   const dispatch = useAppDispatch();
   const loading = useSelector(selectLoading);
@@ -133,7 +132,7 @@ export function TestCaseManager({
     description: Yup.string()
       .required("Description required!")
       .min(10, "Description must be atleast 10 character!"),
-    feature: Yup.string().required("Feature required!"),
+    featureId: Yup.string().required("Feature required!"),
     priority: Yup.string()
       .required("Priority is reuqired!")
       .oneOf(["High", "Medium", "Low"], "Invalid priority"),
@@ -143,10 +142,9 @@ export function TestCaseManager({
   const initialValues = {
     id: "",
     description: "",
-    featureId: "",
-    priority: "",
-    status: "",
-    firebaseId: ""
+    featureId: selectedFeature || "",
+    priority: "Medium",
+    status: "Pending",
   };
 
 const handleUpdateTestCase = async(testCaseId: string) => {
@@ -164,6 +162,7 @@ const handleUpdateTestCase = async(testCaseId: string) => {
       })
     ).unwrap();
     setEditingTestCase(null);
+    toast.success("Test case updated successfully 👍")
   } catch (error) {
     console.error("Failed to update test case:", error);
   }
@@ -176,21 +175,25 @@ const handleEditTestCase = (testCase: TestCase) => {
       description: testCase.description,
       priority: testCase.priority as Priority,
       status: testCase.status as Status,
-      featureId: testCase.featureId,
-      firebaseId: testCase.firebaseId,
+      featureId: selectedFeature,
     });
 }
 
   const handleSubmit = async(values: Omit<TestCase, 'loading' | 'error'>, {resetForm: resetFormikForm}: any) =>{
     try{
-      console.log("SUBMTTING")
-      await dispatch(addTestCase(values)).unwrap();
+      await dispatch(addTestCase({
+          id: values.id,
+          description: values.description,
+          featureId: selectedFeature,
+          priority: values.priority,
+          status: values.status
+      })).unwrap();
       dispatch(resetForm());
       resetFormikForm();
       setIsAddDialogOpen(false);
       toast.success("Sucessfully added test case ✅")
     }catch(error: any) {  
-      toast.error("Error adding test case", error);
+      toast.error(`Error adding test case ${error?.message}`);
     }
   }
 
@@ -284,7 +287,7 @@ const handleEditTestCase = (testCase: TestCase) => {
 
       {/* Main Content */}
       <div className="flex-1 p-6">
-        <Card className="h-full">
+        <Card className="h-full overflow-y-auto">
           <CardContent className="p-6">
             {/* Search and Filters */}
             <div className="flex flex-col sm:flex-row gap-4 mb-6 ">
@@ -356,8 +359,8 @@ const handleEditTestCase = (testCase: TestCase) => {
                 </Button>
               </div>
             ) : (
-              <div className="overflow-auto">
-                <Table>
+              <div className="md:max-h-[65vh] xl:max-h- overflow-y-auto">
+                <Table className="sticky top-0 bg-white dark:bg-gray-900 z-10">
                   <TableHeader>
                     <TableRow>
                       <TableHead>ID</TableHead>
@@ -368,7 +371,7 @@ const handleEditTestCase = (testCase: TestCase) => {
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
+                  <TableBody >
                     {filteredTestCases.map((testCase) => (
                       <TableRow key={testCase.id}>
                         <TableCell className="font-semibold">
@@ -666,12 +669,12 @@ const handleEditTestCase = (testCase: TestCase) => {
                 {/* Feature */}
                 <div className="grid gap-2">
                   <Label htmlFor="feature">Feature</Label>
-                  <Field name="feature">
+                  <Field name="featureId">
                     {({field, form}: any) => (
                       <Select
                         value={field.value}
                         onValueChange={(value) =>
-                          form.setFieldValue("feature", value)
+                          form.setFieldValue("featureId", value)
                         }
                         disabled={loading === true|| isSubmitting}
                       >

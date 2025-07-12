@@ -6,10 +6,10 @@ import { push, ref, remove, update } from "firebase/database";
 export interface TestCase {
   id: string;
   description: string;
-  featureId: string;
+  featureId?: string;
   priority: string;
   status: string;
-  firebaseId: string;
+  firebaseId?: string;
   loading?: boolean;
   error?: string;
 }
@@ -29,16 +29,26 @@ const initialState: TestCaseState  = {
 }
 
 export const addTestCase = createAsyncThunk(
-    'create/addTestCase', 
-    async(testCase: any, {rejectWithValue}) => {
-        try{
-            const newTestCaseRef = ref(database, `testCases`);
-            await push(newTestCaseRef, testCase)
-        }catch(error: any){
-            return rejectWithValue(error.message || 'Failed to add test case!')
-        }
+  'create/addTestCase',
+  async (
+    testCase: Omit<TestCase, 'loading' | 'error'>,
+    { rejectWithValue }
+  ) => {
+    try {
+      const newTestCaseRef = ref(database, `testCases`);
+      await push(newTestCaseRef, {
+        id: testCase.id,
+        description: testCase.description,
+        priority: testCase.priority,
+        status: testCase.status,
+        featureId: testCase.featureId, // ✅ Make sure it's this
+      });
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to add test case!');
     }
-)
+  }
+);
+
 
 
 //Editing test case 
