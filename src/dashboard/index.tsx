@@ -6,15 +6,14 @@ import { ThemeProvider } from "@/themeToggle/themeProvider"
 import { useSelector } from "react-redux"
 import { selectFeatures } from "@/sidebar/reducer/sidebarSlice"
 
-export default function Page() {
+export default function Dashboard() {
   const features = useSelector(selectFeatures);
 const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
 
   useEffect(()=>{
     if(!selectedFeature && features.length > 0) {
-      setSelectedFeature(features[0].id)
+      setSelectedFeature(features[0]._id)
     }
-    console.log("SELECTED ::", selectedFeature);
   }, [features, selectedFeature])
 
 
@@ -27,10 +26,12 @@ const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
             setSelectedFeature={setSelectedFeature}
           />
           <div className="flex-1 flex flex-col min-w-0">
-            <TestCaseManager
-              features={features}
-              selectedFeature={selectedFeature}
-            />
+            {selectedFeature && (
+              <TestCaseManager
+                features={features}
+                selectedFeature={selectedFeature}
+              />
+            )}
           </div>
         </div>
       </SidebarProvider>

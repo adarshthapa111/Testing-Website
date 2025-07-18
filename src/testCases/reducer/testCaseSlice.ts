@@ -1,15 +1,15 @@
+import { BASE_URL } from '@/utils/constants';
 import type { RootState } from './../../store';
-import { database } from "@/firebase";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { push, ref, remove, update } from "firebase/database";
+import axios from 'axios';
 
 export interface TestCase {
-  id: string;
+  _id?: string;
+  test_case_id: string;
   description: string;
-  featureId?: string;
+  featureId: string;
   priority: string;
   status: string;
-  firebaseId?: string;
   loading?: boolean;
   error?: string;
 }
@@ -35,29 +35,37 @@ export const addTestCase = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const newTestCaseRef = ref(database, `testCases`);
-      await push(newTestCaseRef, {
-        id: testCase.id,
+      const response = await axios.post(`${BASE_URL}/testcases`, {
+        test_case_id: testCase.test_case_id,
         description: testCase.description,
+        featureId: testCase.featureId,
         priority: testCase.priority,
         status: testCase.status,
-        featureId: testCase.featureId, // ✅ Make sure it's this
       });
+      return response.data;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to add test case!');
     }
   }
 );
 
+export const fetchTestCases = createAsyncThunk('testCases/fetchTestCases', async(_, {rejectWithValue})=>{
+  try{
+    const response = await axios.get(`${BASE_URL}/testcases`);
+    return response.data;
+  }catch(error: any){
+    return rejectWithValue(error.message || 'Failed to fetch data');
+  }
+})
 
 
 //Editing test case 
 export const editTestCase = createAsyncThunk(
   'testCase/editTestCases',
   async( updatedTestCase: {
-      firebaseId: string;
+      id: string;
       data: {
-        id: string;
+        test_case_id: string;
         description: string;
         priority: string;
         status: string;
@@ -66,11 +74,8 @@ export const editTestCase = createAsyncThunk(
     }
     , {rejectWithValue})=> {
     try{
-      const testCaseRef = ref(database, `testCases/${updatedTestCase.firebaseId}`);
-      await update(testCaseRef, updatedTestCase.data);
-      return {
-        ...updatedTestCase.data, firebaseId: updatedTestCase.firebaseId
-      }
+      const response = await axios.put(`${BASE_URL}/testcases/${updatedTestCase.id}`, updatedTestCase.data);
+      return response.data;
     }catch(error: any) {
       return rejectWithValue(error.message || "Failed to edit test case!")
     }
@@ -81,9 +86,7 @@ export const deleteTestCase = createAsyncThunk (
   "testCases/deleteTestCases",
   async(testCaseId: string, {rejectWithValue}) => {
     try {
-      const testCaseRef = ref(database, `testCases/${testCaseId}`);
-      console.log("TestCaseID", testCaseId);
-      await remove(testCaseRef);
+      await axios.delete(`${BASE_URL}/testcases/${testCaseId}`);
       return testCaseId;
     }catch(error: any) {
       return rejectWithValue(error.message || "Error deleting test case!");
@@ -102,7 +105,8 @@ export const createTestSlice = createSlice({
     },
     extraReducers: (builders) => {
         builders
-        .addCase(addTestCase.fulfilled, (state)=>{
+        .addCase(addTestCase.fulfilled, (state, action)=>{
+            state.testCase.push(action.payload);
             state.loading = false;
             state.error = '';
         })
@@ -115,7 +119,18 @@ export const createTestSlice = createSlice({
             state.loading = false;
         })
         .addCase(deleteTestCase.fulfilled, (state, action)=>{
-          state.testCase = state.testCase.filter((testCase)=> testCase.id !== action.payload);
+          state.testCase = state.testCase.filter((testCase)=> testCase._id !== action.payload);
+        })
+        .addCase(fetchTestCases.rejected, (state, action)=>{
+          state.error = action.payload as string;
+          state.loading = false;
+        })
+        .addCase(fetchTestCases.fulfilled, (state, action) => {
+          state.testCase = action.payload;
+          state.loading = false;
+        })
+        .addCase(fetchTestCases.pending, (state)=> {
+          state.loading = true;
         })
     }
 })
@@ -123,7 +138,6 @@ export const createTestSlice = createSlice({
 export default createTestSlice.reducer;
 
 export const {resetForm, setTestCases} = createTestSlice.actions;
-
 export const selectLoading = (state: RootState) => state.create.loading;
 export const selectError = (state: RootState) => state.create.error;
 export const selectTestCases = (state: RootState) => state.create.testCase;

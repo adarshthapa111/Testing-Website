@@ -1,5 +1,5 @@
 import {useEffect, useState} from "react";
-import {Plus, Search, FileText, Trash2} from "lucide-react";
+import {Plus, Search, Trash2, PenBoxIcon} from "lucide-react";
 import {useSidebar} from "@/components/ui/sidebar";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
@@ -23,24 +23,22 @@ import {
   selectError,
   selectLoading,
   deleteFeature,
-  setFeatures,
+  featchFeatures,
 } from "./reducer/sidebarSlice";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { SiderBarLoader } from "@/components/loader/sidebarLoader";
 import { toast } from "sonner";
-import { onValue, ref } from "firebase/database";
-import { database } from "@/firebase";
 import { useSelector } from "react-redux";
 
 interface Feature {
-  id: string;
+  _id: string;
   name: string;
   description: string;
   icon: string;
   testCounts: {
     passed: number;
     failed: number;
-    ready: number;
+    pending: number;
   };
 }
 
@@ -62,24 +60,7 @@ export function Sidebar({
   const {open} = useSidebar();
 
 useEffect(() => {
-  const featuresRef = ref(database, "features");
-
-  const unsubscribe = onValue(featuresRef, (snapshot) => {
-    const data = snapshot.val();
-    const features = data
-      ? Object.entries(data).map(([id, value]: [string, any]) => ({
-          id,
-          name: value.name,
-          description: value.description,
-          icon: value.icon || "📋",
-          testCounts: value.testCounts || { passed: 0, failed: 0, ready: 0 },
-        }))
-      : [];
-
-    dispatch(setFeatures(features));
-
-  });
-  return () => unsubscribe(); // clean up listener
+  dispatch(featchFeatures());
 }, [dispatch]);
 
   const validationSchema = Yup.object({
@@ -95,14 +76,15 @@ useEffect(() => {
   });
 
   const initialValues = {
+    _id: "",
     name: "",
     description: "",
     icon: "📋",
-    testCounts: {passed: 0, failed: 0, ready: 0},
+    testCounts: {passed: 0, failed: 0, pending: 0},
   };
 
   const handleFeatureClick = (featureId: string) => {
-    setSelectedFeature(featureId === selectedFeature ? null : featureId);
+    setSelectedFeature(featureId);
   };
 
   const handleAddFeature = async (
@@ -114,6 +96,7 @@ useEffect(() => {
       await dispatch(addFeature(values)).unwrap();
       resetForm()
       setIsAddDialogOpen(false);
+      dispatch(featchFeatures());
       toast.success("Feature added successfully!");
     } catch (error: any) {
       toast.error(error.message || "Failed to add feature");
@@ -142,8 +125,8 @@ useEffect(() => {
       {/* Header */}
       <div className="p-6 pb-4 border-b border-gray-200 dark:border-gray-800">
         <div className="flex items-center gap-3 mb-6">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-600 text-white">
-            <FileText className="h-5 w-5" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-900 text-white">
+            <PenBoxIcon className="h-5 w-5" />
           </div>
           <div>
             <h1 className="text-lg font-bold text-gray-900 dark:text-white">
@@ -261,15 +244,15 @@ useEffect(() => {
         <div className="space-y-3">
           {filteredFeatures.map((feature, index) => (
             <div
-              key={feature.id}
-              onClick={() => handleFeatureClick(feature.id)}
+              key={feature._id}
+              onClick={() => handleFeatureClick(feature._id)}
               className={`group relative rounded-sm p-4 transition-all duration-200 hover:shadow-md cursor-pointer ${
-                selectedFeature === feature.id
-                  ? "bg-gray-900 text-white border-2 border-gray-100 shadow-md shadow-gray-600"
+                selectedFeature === feature._id
+                  ? "bg-gray-900 text-gray-50 border-2 border-gray-100 shadow-md shadow-gray-600"
                   : index === 0
                   ? "bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 shadow-sm"
                   : index === 3
-                  ? "bg-gray-100 dark:bg-gray-900/50 border-2 border-gray-200 dark:border-gray-700"
+                  ? "bg-gray-200 dark:bg-gray-900/50 border-2 border-gray-200 dark:border-gray-700"
                   : "bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-800"
               }`}
             >
@@ -281,27 +264,27 @@ useEffect(() => {
                   <div className="flex items-center justify-between mb-1">
                     <h3
                       className={`font-semibold text-sm leading-tight ${
-                        selectedFeature === feature.id
-                          ? "text-white"
-                          : "text-gray-900 dark:text-white"
+                        selectedFeature === feature._id
+                          ? "text-white uppercase"
+                          : "text-gray-900 dark:text-white uppercase"
                       }`}
                     >
                       {feature.name}
                     </h3>
                     {feature.testCounts.passed +
                       feature.testCounts.failed +
-                      feature.testCounts.ready >
+                      feature.testCounts.pending >
                       0 && (
                       <span
                         className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                          selectedFeature === feature.id
+                          selectedFeature === feature._id
                             ? "bg-gray-500 text-white"
                             : "text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700"
                         }`}
                       >
                         {feature.testCounts.passed +
                           feature.testCounts.failed +
-                          feature.testCounts.ready}
+                          feature.testCounts.pending}
                       </span>
                     )}
                      <AlertDialog>
@@ -310,7 +293,7 @@ useEffect(() => {
                               variant="ghost"
                               size="sm"
                               className={`h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity ${
-                                selectedFeature === feature.id
+                                selectedFeature === feature._id
                                   ? "hover:bg-gray-700 text-white"
                                   : "hover:bg-red-100 dark:hover:bg-red-900 text-red-600 dark:text-red-400"
                               }`}
@@ -330,7 +313,7 @@ useEffect(() => {
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
                               <AlertDialogAction
-                                onClick={() => handleDeleteFeature(feature.id)}
+                                onClick={() => handleDeleteFeature(feature._id)}
                                 className="bg-red-600 hover:bg-red-700"
                               >
                                 Delete
@@ -341,7 +324,7 @@ useEffect(() => {
                   </div>
                   <p
                     className={`text-xs mb-3 line-clamp-2 ${
-                      selectedFeature === feature.id
+                      selectedFeature === feature._id
                         ? "text-gray-100"
                         : "text-gray-600 dark:text-gray-300"
                     }`}
@@ -355,14 +338,29 @@ useEffect(() => {
                         <div className="w-2 h-2 rounded-full bg-green-500"></div>
                           <div
                             className={
-                              selectedFeature === feature.id ? "text-gray-100" : "text-gray-600 dark:text-gray-300"
+                              selectedFeature === feature._id ? "text-gray-100" : "text-gray-600 dark:text-gray-300"
                             }
                           >
                             {feature.testCounts.passed}
                             </div>
                       </div>
-                        <div>
+                        <div className="text-sm">
                          Passed
+                      </div>
+                    </div>
+                     <div className="items-center gap-1">
+                      <div className="flex justify-center items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                          <div
+                            className={
+                              selectedFeature === feature._id ? "text-gray-100" : "text-gray-600 dark:text-gray-300"
+                            }
+                          >
+                            {feature.testCounts.pending}
+                            </div>
+                      </div>
+                        <div className="text-sm">
+                         Pending
                       </div>
                     </div>
                    <div className="items-center gap-1">
@@ -370,29 +368,14 @@ useEffect(() => {
                         <div className="w-2 h-2 rounded-full bg-red-500"></div>
                           <div
                             className={
-                              selectedFeature === feature.id ? "text-gray-100" : "text-gray-600 dark:text-gray-300"
+                              selectedFeature === feature._id ? "text-gray-100" : "text-gray-600 dark:text-gray-300"
                             }
                           >
                             {feature.testCounts.failed}
                             </div>
                       </div>
-                        <div>
+                        <div className="text-sm"> 
                          Failed
-                      </div>
-                    </div>
-                    <div className="items-center gap-1">
-                      <div className="flex justify-center items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                          <div
-                            className={
-                              selectedFeature === feature.id ? "text-gray-100" : "text-gray-600 dark:text-gray-300"
-                            }
-                          >
-                            {feature.testCounts.ready}
-                            </div>
-                      </div>
-                        <div>
-                         Ready
                       </div>
                     </div>
                   </div>

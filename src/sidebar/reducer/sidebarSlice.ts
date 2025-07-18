@@ -1,17 +1,17 @@
-import {database} from "@/firebase";;
 import type {RootState} from "@/store";
+import { BASE_URL } from "@/utils/constants";
 import {createAsyncThunk, createSlice} from "@reduxjs/toolkit";
-import { push, ref, remove} from "firebase/database";
+import axios from "axios";
 
 export interface Feature {
-  id: string;
+  _id:string;
   name: string;
   description: string;
   icon: string;
   testCounts: {
     passed: number;
     failed: number;
-    ready: number;
+    pending: number;
   };
 }
 
@@ -33,25 +33,34 @@ export const addFeature = createAsyncThunk(
   "features/addFeature", // Fixed action type
   async (feature: Omit<Feature, "id">, {rejectWithValue}) => {
     try {
-      const featureRef = ref(database, "features");
-      await push(featureRef, feature);
-      return {
-         ...feature
-        };
+      const response = await axios.post(`${BASE_URL}/features`, {
+        name: feature.name,
+        description: feature.description,
+        icon: feature.icon
+      });
+      return response.data;
     } catch (error: any) {
       return rejectWithValue(error.message || "Failed to add feature");
     }
   }
 );
 
+export const featchFeatures = createAsyncThunk(
+  'features/fetchFeatures', async(_, {rejectWithValue})=>{
+    try{
+      const response = await axios.get(`${BASE_URL}/features`);
+      return response.data;
+    }catch(error: any) {
+      rejectWithValue(error.message || 'Failed to fetch feature!')
+    }
+  }
+)
+
 export const deleteFeature = createAsyncThunk(
   'features/deleteFeature',
   async(featureId: string, {rejectWithValue})=> {
     try{
-      const featureRef = ref(database, `features/${featureId}`);
-      await remove(featureRef);
-      const testCaseRef = ref(database, `testCases/${featureId}`);
-      await remove(testCaseRef);
+      await axios.delete(`${BASE_URL}/features/${featureId}`);
       return featureId;
     }catch(error: any) {
       return rejectWithValue(error.message || "Unable to delete the feature!")
@@ -86,7 +95,18 @@ const sidebarSlice = createSlice({
         state.error = action.payload as string;
       })
       .addCase(deleteFeature.fulfilled, (state, action)=>{
-        state.features = state.features.filter((feature)=> feature.id !== action.payload);
+        state.features = state.features.filter((feature)=> feature._id !== action.payload);
+      })
+      .addCase(featchFeatures.fulfilled, (state, action)=>{
+        state.features = action.payload;
+        state.loading = false;
+      })
+      .addCase(featchFeatures.rejected, (state, action)=>{
+        state.error = action.payload as string;
+        state.loading = false;
+      })
+      .addCase(featchFeatures.pending, (state)=>{
+        state.loading = true;
       })
   },
 });
