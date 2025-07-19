@@ -3,7 +3,7 @@ import createReducer from '@/testCases/reducer/testCaseSlice';
 import featureReducer from '@/sidebar/reducer/sidebarSlice';
 export const store = configureStore({
   reducer: {
-    create: createReducer,
+    testcases: createReducer,
     feature: featureReducer,
   },
 })

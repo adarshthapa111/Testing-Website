@@ -1,10 +1,21 @@
-import {useEffect, useState} from "react";
-import {Plus, Search, Trash2, PenBoxIcon} from "lucide-react";
-import {useSidebar} from "@/components/ui/sidebar";
-import {Button} from "@/components/ui/button";
-import {Input} from "@/components/ui/input";
-import {Label} from "@/components/ui/label";
-import {Textarea} from "@/components/ui/textarea";
+import { useEffect, useState } from "react"
+import {
+  Plus,
+  Search,
+  Trash2,
+  PenBoxIcon,
+  Edit,
+  MoreVertical,
+  TrendingUp,
+  Clock,
+  CheckCircle,
+  XCircle,
+} from "lucide-react"
+import { useSidebar } from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Dialog,
   DialogContent,
@@ -13,146 +24,194 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import {Formik, Form, Field, ErrorMessage} from "formik";
-import * as Yup from "yup";
-import {useAppDispatch, useAppSelector} from "@/hooks/use-dispatch";
+} from "@/components/ui/dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Formik, Form, Field, ErrorMessage } from "formik"
+import * as Yup from "yup"
+import { useAppDispatch, useAppSelector } from "@/hooks/use-dispatch"
 import {
   addFeature,
   selectFeatures,
   selectError,
   selectLoading,
   deleteFeature,
-  featchFeatures,
-} from "./reducer/sidebarSlice";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { SiderBarLoader } from "@/components/loader/sidebarLoader";
-import { toast } from "sonner";
-import { useSelector } from "react-redux";
+  fetchFeatures,
+} from "./reducer/sidebarSlice"
+import { selectTestCases } from "../testCases/reducer/testCaseSlice" // Import your test cases selector
+import { SiderBarLoader } from "@/components/loader/sidebarLoader"
+import { toast } from "sonner"
+import { useSelector } from "react-redux"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { useFeaturesWithCounts } from "../hooks/use-test-count"
+
 
 interface Feature {
-  _id: string;
-  name: string;
-  description: string;
-  icon: string;
+  _id: string
+  name: string
+  description: string
+  icon: string
   testCounts: {
-    passed: number;
-    failed: number;
-    pending: number;
-  };
+    passed: number
+    failed: number
+    pending: number
+  }
 }
 
 interface AppSidebarProps {
-  selectedFeature: string | null;
-  setSelectedFeature: (featureId: string | null) => void;
+  selectedFeature: string | null
+  setSelectedFeature: (featureId: string | null) => void
 }
 
-export function Sidebar({
-  selectedFeature,
-  setSelectedFeature,
-}: AppSidebarProps) {
-  const dispatch = useAppDispatch();
-  const features = useSelector(selectFeatures);
-  const loading = useAppSelector(selectLoading);
-  const error = useAppSelector(selectError);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const {open} = useSidebar();
+export function Sidebar({ selectedFeature, setSelectedFeature }: AppSidebarProps) {
+  const dispatch = useAppDispatch()
+  const features = useSelector(selectFeatures)
+  const testCases: any = useSelector(selectTestCases) // Get test cases from Redux
+  const loading = useAppSelector(selectLoading)
+  const error = useAppSelector(selectError)
 
-useEffect(() => {
-  dispatch(featchFeatures());
-}, [dispatch]);
+  // Use the custom hook to get features with calculated counts
+  const featuresWithCounts = useFeaturesWithCounts(features, testCases)
+
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [editingFeature, setEditingFeature] = useState<Feature | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const { open } = useSidebar()
+
+  useEffect(() => {
+    dispatch(fetchFeatures())
+  }, [dispatch])
 
   const validationSchema = Yup.object({
-    name: Yup.string()
-      .required("Feature name is required")
-      .min(3, "Feature name must be at least 3 characters"),
-    description: Yup.string()
-      .required("Description is required")
-      .min(10, "Description must be at least 10 characters"),
-    icon: Yup.string()
-      .required("Icon is required")
-      .max(2, "Icon must be a single emoji"),
-  });
+    name: Yup.string().required("Feature name is required").min(3, "Feature name must be at least 3 characters"),
+    description: Yup.string().required("Description is required").min(10, "Description must be at least 10 characters"),
+    icon: Yup.string().required("Icon is required").max(2, "Icon must be a single emoji"),
+  })
 
   const initialValues = {
     _id: "",
     name: "",
     description: "",
     icon: "📋",
-    testCounts: {passed: 0, failed: 0, pending: 0},
-  };
+    testCounts: { passed: 0, failed: 0, pending: 0 },
+  }
 
   const handleFeatureClick = (featureId: string) => {
-    setSelectedFeature(featureId);
-  };
+    setSelectedFeature(featureId)
+  }
 
-  const handleAddFeature = async (
-    values: Omit<Feature, "id">,
-    {resetForm}: any
-  ) => {
+  const handleAddFeature = async (values: Omit<Feature, "id">, { resetForm }: any) => {
     try {
-      console.log("ADDING FEATURE")
-      await dispatch(addFeature(values)).unwrap();
+      await dispatch(addFeature(values)).unwrap()
       resetForm()
-      setIsAddDialogOpen(false);
-      dispatch(featchFeatures());
-      toast.success("Feature added successfully!");
+      setIsAddDialogOpen(false)
+      dispatch(fetchFeatures())
+      toast.success("Feature added successfully!")
     } catch (error: any) {
-      toast.error(error.message || "Failed to add feature");
-    }
-  };
-
-  const filteredFeatures = features.filter(
-    (feature) =>
-      feature.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      feature.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const handleDeleteFeature = async(featureId:string, ) => {
-    try{ 
-      await dispatch(deleteFeature(featureId)).unwrap();
-      toast.success("Feature deleted successfully 👍");
-    }catch(error: any) {
-       toast.error("Error deleting feature!", error);
+      toast.error(error.message || "Failed to add feature")
     }
   }
 
-  if (!open) return null;
+  const handleEditFeature = async () => {
+    try {
+      // You'll need to implement updateFeature action in your slice
+      // await dispatch(updateFeature(values)).unwrap();
+      // resetForm()
+      setIsEditDialogOpen(false)
+      setEditingFeature(null)
+      dispatch(fetchFeatures())
+      toast.success("Feature updated successfully!")
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update feature")
+    }
+  }
+
+  const openEditDialog = (feature: Feature) => {
+    setEditingFeature(feature)
+    setIsEditDialogOpen(true)
+  }
+
+  const filteredFeatures = featuresWithCounts.filter(
+    (feature) =>
+      feature.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      feature.description.toLowerCase().includes(searchQuery.toLowerCase()),
+  )
+
+  const handleDeleteFeature = async (featureId: string) => {
+    try {
+      await dispatch(deleteFeature(featureId)).unwrap()
+      toast.success("Feature deleted successfully 👍")
+    } catch (error: any) {
+      toast.error("Error deleting feature!", error)
+    }
+  }
+
+  // Calculate overall statistics
+  const overallStats = featuresWithCounts.reduce(
+    (acc, feature) => ({
+      totalFeatures: acc.totalFeatures + 1,
+      totalTests: acc.totalTests + feature.testCounts.passed + feature.testCounts.failed + feature.testCounts.pending,
+      totalPassed: acc.totalPassed + feature.testCounts.passed,
+      totalFailed: acc.totalFailed + feature.testCounts.failed,
+      totalPending: acc.totalPending + feature.testCounts.pending,
+    }),
+    { totalFeatures: 0, totalTests: 0, totalPassed: 0, totalFailed: 0, totalPending: 0 },
+  )
+
+  if (!open) return null
 
   return (
-    <div className="w-1/5 min-w-[300px] h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-colors duration-200">
+    <div className="shadow-md w-80 h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col">
       {/* Header */}
-      <div className="p-6 pb-4 border-b border-gray-200 dark:border-gray-800">
+      <div className="p-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-3 mb-6">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-900 text-white">
-            <PenBoxIcon className="h-5 w-5" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-slate-900 to-slate-700 dark:from-slate-700 dark:to-slate-500 text-white shadow-lg">
+            <PenBoxIcon className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-gray-900 dark:text-white">
-              Test Manager
-            </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-300">
-              Organize by features
+            <h1 className="text-xl font-bold text-slate-900 dark:text-white">Test Manager</h1>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              {overallStats.totalFeatures} features • {overallStats.totalTests} tests
             </p>
           </div>
         </div>
 
+        {/* Overall Statistics */}
+        {overallStats.totalTests > 0 && (
+          <div className="mb-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div>
+                <div className="text-lg font-bold text-green-600">{overallStats.totalPassed}</div>
+                <div className="text-xs text-slate-600 dark:text-slate-400">Passed</div>
+              </div>
+              <div>
+                <div className="text-lg font-bold text-yellow-600">{overallStats.totalPending}</div>
+                <div className="text-xs text-slate-600 dark:text-slate-400">Pending</div>
+              </div>
+              <div>
+                <div className="text-lg font-bold text-red-600">{overallStats.totalFailed}</div>
+                <div className="text-xs text-slate-600 dark:text-slate-400">Failed</div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Search Bar */}
         <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <Input
             placeholder="Search features..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-white/80 dark:bg-gray-800/80 border-gray-200 dark:border-gray-600 focus:bg-white dark:focus:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400"
+            className="pl-10 bg-white/90 dark:bg-slate-800/90 border-slate-200 dark:border-slate-600 focus:bg-white dark:focus:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-500 shadow-sm"
           />
         </div>
 
         {/* Add Feature Button */}
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="w-full bg-gray-900 hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-700 text-white font-medium py-2.5 transition-colors">
+            <Button className="border-white border-2 shadow-md shadow-gray-600 w-full bg-gradient-to-r from-slate-900 to-slate-700  text-white font-medium py-3 transition-all duration-200">
               <Plus className="h-4 w-4 mr-2" />
               Add Feature
             </Button>
@@ -160,16 +219,10 @@ useEffect(() => {
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Add New Feature</DialogTitle>
-              <DialogDescription>
-                Create a new feature to organize your test cases.
-              </DialogDescription>
+              <DialogDescription>Create a new feature to organize your test cases.</DialogDescription>
             </DialogHeader>
-            <Formik
-              initialValues={initialValues}
-              validationSchema={validationSchema}
-              onSubmit={handleAddFeature}
-            >
-              {({isSubmitting}) => (
+            <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={handleAddFeature}>
+              {({ isSubmitting }) => (
                 <Form className="grid gap-4 py-4">
                   {error && <p className="text-red-500 text-sm">{error}</p>}
                   <div className="grid gap-2">
@@ -181,11 +234,7 @@ useEffect(() => {
                       placeholder="Enter feature name"
                       disabled={loading || isSubmitting}
                     />
-                    <ErrorMessage
-                      name="name"
-                      component="p"
-                      className="text-red-500 text-sm"
-                    />
+                    <ErrorMessage name="name" component="p" className="text-red-500 text-sm" />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="description">Description</Label>
@@ -197,11 +246,7 @@ useEffect(() => {
                       rows={3}
                       disabled={loading || isSubmitting}
                     />
-                    <ErrorMessage
-                      name="description"
-                      component="p"
-                      className="text-red-500 text-sm"
-                    />
+                    <ErrorMessage name="description" component="p" className="text-red-500 text-sm" />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="icon">Icon (Emoji)</Label>
@@ -213,16 +258,12 @@ useEffect(() => {
                       maxLength={2}
                       disabled={loading || isSubmitting}
                     />
-                    <ErrorMessage
-                      name="icon"
-                      component="p"
-                      className="text-red-500 text-sm"
-                    />
+                    <ErrorMessage name="icon" component="p" className="text-red-500 text-sm" />
                   </div>
                   <DialogFooter>
                     <Button
                       type="submit"
-                      className="bg-gray-600 hover:bg-gray-700"
+                      className="bg-slate-600 hover:bg-slate-700"
                       disabled={loading || isSubmitting}
                     >
                       {loading || isSubmitting ? "Adding..." : "Add Feature"}
@@ -233,159 +274,252 @@ useEffect(() => {
             </Formik>
           </DialogContent>
         </Dialog>
+
+        {/* Edit Feature Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Edit Feature</DialogTitle>
+              <DialogDescription>Update the feature details.</DialogDescription>
+            </DialogHeader>
+            {editingFeature && (
+              <Formik initialValues={editingFeature} validationSchema={validationSchema} onSubmit={handleEditFeature}>
+                {({ isSubmitting }) => (
+                  <Form className="grid gap-4 py-4">
+                    {error && <p className="text-red-500 text-sm">{error}</p>}
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-name">Feature Name</Label>
+                      <Field
+                        as={Input}
+                        id="edit-name"
+                        name="name"
+                        placeholder="Enter feature name"
+                        disabled={loading || isSubmitting}
+                      />
+                      <ErrorMessage name="name" component="p" className="text-red-500 text-sm" />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-description">Description</Label>
+                      <Field
+                        as={Textarea}
+                        id="edit-description"
+                        name="description"
+                        placeholder="Enter feature description"
+                        rows={3}
+                        disabled={loading || isSubmitting}
+                      />
+                      <ErrorMessage name="description" component="p" className="text-red-500 text-sm" />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-icon">Icon (Emoji)</Label>
+                      <Field
+                        as={Input}
+                        id="edit-icon"
+                        name="icon"
+                        placeholder="📋"
+                        maxLength={2}
+                        disabled={loading || isSubmitting}
+                      />
+                      <ErrorMessage name="icon" component="p" className="text-red-500 text-sm" />
+                    </div>
+                    <DialogFooter>
+                      <Button
+                        type="submit"
+                        className="bg-slate-600 hover:bg-slate-700"
+                        disabled={loading || isSubmitting}
+                      >
+                        {loading || isSubmitting ? "Updating..." : "Update Feature"}
+                      </Button>
+                    </DialogFooter>
+                  </Form>
+                )}
+              </Formik>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto p-4">
-        {loading && 
-          <SiderBarLoader/>
-        }
-        {error && <p className="text-red-500">{error}</p>}
-        <div className="space-y-3">
-          {filteredFeatures.map((feature, index) => (
-            <div
-              key={feature._id}
-              onClick={() => handleFeatureClick(feature._id)}
-              className={`group relative rounded-sm p-4 transition-all duration-200 hover:shadow-md cursor-pointer ${
-                selectedFeature === feature._id
-                  ? "bg-gray-900 text-gray-50 border-2 border-gray-100 shadow-md shadow-gray-600"
-                  : index === 0
-                  ? "bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 shadow-sm"
-                  : index === 3
-                  ? "bg-gray-200 dark:bg-gray-900/50 border-2 border-gray-200 dark:border-gray-700"
-                  : "bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-800"
-              }`}
-            >
-              <div className="flex items-start gap-3">
-                <div className="text-2xl flex-shrink-0 mt-0.5">
-                  {feature.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <h3
-                      className={`font-semibold text-sm leading-tight ${
-                        selectedFeature === feature._id
-                          ? "text-white uppercase"
-                          : "text-gray-900 dark:text-white uppercase"
-                      }`}
-                    >
-                      {feature.name}
-                    </h3>
-                    {feature.testCounts.passed +
-                      feature.testCounts.failed +
-                      feature.testCounts.pending >
-                      0 && (
-                      <span
-                        className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                          selectedFeature === feature._id
-                            ? "bg-gray-500 text-white"
-                            : "text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700"
-                        }`}
-                      >
-                        {feature.testCounts.passed +
-                          feature.testCounts.failed +
-                          feature.testCounts.pending}
-                      </span>
-                    )}
-                     <AlertDialog>
-                          <AlertDialogTrigger asChild>
+      <div className="flex-1 overflow-auto p-4 space-y-4">
+        {loading && <SiderBarLoader />}
+        {error && <p className="text-red-500 text-center p-4">{error}</p>}
+
+        {filteredFeatures.length === 0 && !loading ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="text-4xl mb-4">🔍</div>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No features found</h3>
+            <p className="text-slate-600 dark:text-slate-400 text-sm">
+              {searchQuery ? "Try adjusting your search terms" : "Create your first feature to get started"}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filteredFeatures.map((feature) => {
+              const totalTests = feature.testCounts.passed + feature.testCounts.failed + feature.testCounts.pending
+              const isSelected = selectedFeature === feature._id
+
+              return (
+                <Card
+                  key={feature._id}
+                  className={`group cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] ${
+                    isSelected
+                      ? "bg-gradient-to-br from-slate-900 to-slate-800 text-white border-white border-2 shadow-md shadow-gray-600"
+                      : "bg-white/80 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700"
+                  }`}
+                  onClick={() => handleFeatureClick(feature._id)}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="text-2xl">{feature.icon}</div>
+                        <div className="flex-1">
+                          <h3
+                            className={`font-semibold text-sm uppercase tracking-wide ${
+                              isSelected ? "text-white" : "text-slate-900 dark:text-white"
+                            }`}
+                          >
+                            {feature.name}
+                          </h3>
+                          <p
+                            className={`text-xs mt-1 line-clamp-2 ${
+                              isSelected ? "text-slate-200" : "text-slate-600 dark:text-slate-400"
+                            }`}
+                          >
+                            {feature.description}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        {totalTests > 0 && (
+                          <Badge
+                            variant="secondary"
+                            className={`text-xs ${
+                              isSelected
+                                ? "bg-slate-700 text-slate-200"
+                                : "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
+                            }`}
+                          >
+                            {totalTests}
+                          </Badge>
+                        )}
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
                             <Button
                               variant="ghost"
                               size="sm"
-                              className={`h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity ${
-                                selectedFeature === feature._id
-                                  ? "hover:bg-gray-700 text-white"
-                                  : "hover:bg-red-100 dark:hover:bg-red-900 text-red-600 dark:text-red-400"
+                              className={`h-8 w-8 p-0 opacity-100 transition-opacity ${
+                                isSelected
+                                  ? "hover:bg-slate-700 text-slate-200 hover:text-gray-100"
+                                  : "hover:bg-slate-600 dark:hover:bg-slate-700 hover:text-gray-100"
                               }`}
                               onClick={(e) => e.stopPropagation()}
                             >
-                              <Trash2 className="h-3 w-3" />
+                              <MoreVertical className="h-4 w-4" />
                             </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Feature</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete "{feature.name}"? This action cannot be undone and will
-                                also delete all associated test cases.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteFeature(feature._id)}
-                                className="bg-red-600 hover:bg-red-700"
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                  </div>
-                  <p
-                    className={`text-xs mb-3 line-clamp-2 ${
-                      selectedFeature === feature._id
-                        ? "text-gray-100"
-                        : "text-gray-600 dark:text-gray-300"
-                    }`}
-                  >
-                    {feature.description}
-                  </p>
-                  {/* Status Indicators */}
-                  <div className="flex items-center gap-6 text-xs">
-                    <div className="items-center gap-1">
-                      <div className="flex justify-center items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                          <div
-                            className={
-                              selectedFeature === feature._id ? "text-gray-100" : "text-gray-600 dark:text-gray-300"
-                            }
-                          >
-                            {feature.testCounts.passed}
-                            </div>
-                      </div>
-                        <div className="text-sm">
-                         Passed
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openEditDialog(feature)}>
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit Feature
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleDeleteFeature(feature._id)}
+                              className="text-red-600 dark:text-red-400"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete Feature
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
-                     <div className="items-center gap-1">
-                      <div className="flex justify-center items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                          <div
-                            className={
-                              selectedFeature === feature._id ? "text-gray-100" : "text-gray-600 dark:text-gray-300"
-                            }
-                          >
-                            {feature.testCounts.pending}
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    {totalTests > 0 && (
+                      <>
+
+                        {/* Test Statistics */}
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="text-center">
+                            <div
+                              className={`flex items-center justify-center gap-1 mb-1 ${
+                                isSelected ? "text-green-300" : "text-green-600"
+                              }`}
+                            >
+                              <CheckCircle className="h-3 w-3" />
+                              <span className="text-sm font-bold">{feature.testCounts.passed}</span>
                             </div>
-                      </div>
-                        <div className="text-sm">
-                         Pending
-                      </div>
-                    </div>
-                   <div className="items-center gap-1">
-                      <div className="flex justify-center items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                          <div
-                            className={
-                              selectedFeature === feature._id ? "text-gray-100" : "text-gray-600 dark:text-gray-300"
-                            }
-                          >
-                            {feature.testCounts.failed}
+                            <div
+                              className={`text-xs ${
+                                isSelected ? "text-slate-300" : "text-slate-500 dark:text-slate-400"
+                              }`}
+                            >
+                              Passed
                             </div>
+                          </div>
+
+                          <div className="text-center">
+                            <div
+                              className={`flex items-center justify-center gap-1 mb-1 ${
+                                isSelected ? "text-yellow-300" : "text-yellow-600"
+                              }`}
+                            >
+                              <Clock className="h-3 w-3" />
+                              <span className="text-sm font-bold">{feature.testCounts.pending}</span>
+                            </div>
+                            <div
+                              className={`text-xs ${
+                                isSelected ? "text-slate-300" : "text-slate-500 dark:text-slate-400"
+                              }`}
+                            >
+                              Pending
+                            </div>
+                          </div>
+
+                          <div className="text-center">
+                            <div
+                              className={`flex items-center justify-center gap-1 mb-1 ${
+                                isSelected ? "text-red-500" : "text-red-600"
+                              }`}
+                            >
+                              <XCircle className="h-3 w-3" />
+                              <span className="text-sm font-bold">{feature.testCounts.failed}</span>
+                            </div>
+                            <div
+                              className={`text-xs ${
+                                isSelected ? "text-slate-300" : "text-slate-500 dark:text-slate-400"
+                              }`}
+                            >
+                              Failed
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {totalTests === 0 && (
+                      <div className="text-center py-4">
+                        <TrendingUp
+                          className={`h-8 w-8 mx-auto mb-2 ${
+                            isSelected ? "text-slate-400" : "text-slate-300 dark:text-slate-600"
+                          }`}
+                        />
+                        <p
+                          className={`text-xs ${isSelected ? "text-slate-300" : "text-slate-500 dark:text-slate-400"}`}
+                        >
+                          No test cases yet
+                        </p>
                       </div>
-                        <div className="text-sm"> 
-                         Failed
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
-  );
+  )
 }
-

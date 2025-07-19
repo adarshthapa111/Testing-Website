@@ -138,6 +138,6 @@ export const createTestSlice = createSlice({
 export default createTestSlice.reducer;
 
 export const {resetForm, setTestCases} = createTestSlice.actions;
-export const selectLoading = (state: RootState) => state.create.loading;
-export const selectError = (state: RootState) => state.create.error;
-export const selectTestCases = (state: RootState) => state.create.testCase;
+export const selectLoading = (state: RootState) => state.testcases.loading;
+export const selectError = (state: RootState) => state.testcases.error;
+export const selectTestCases = (state: RootState) => state.testcases.testCase;

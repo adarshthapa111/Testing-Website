@@ -45,7 +45,7 @@ export const addFeature = createAsyncThunk(
   }
 );
 
-export const featchFeatures = createAsyncThunk(
+export const fetchFeatures = createAsyncThunk(
   'features/fetchFeatures', async(_, {rejectWithValue})=>{
     try{
       const response = await axios.get(`${BASE_URL}/features`);
@@ -97,15 +97,15 @@ const sidebarSlice = createSlice({
       .addCase(deleteFeature.fulfilled, (state, action)=>{
         state.features = state.features.filter((feature)=> feature._id !== action.payload);
       })
-      .addCase(featchFeatures.fulfilled, (state, action)=>{
+      .addCase(fetchFeatures.fulfilled, (state, action)=>{
         state.features = action.payload;
         state.loading = false;
       })
-      .addCase(featchFeatures.rejected, (state, action)=>{
+      .addCase(fetchFeatures.rejected, (state, action)=>{
         state.error = action.payload as string;
         state.loading = false;
       })
-      .addCase(featchFeatures.pending, (state)=>{
+      .addCase(fetchFeatures.pending, (state)=>{
         state.loading = true;
       })
   },

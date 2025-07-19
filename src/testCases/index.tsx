@@ -1,9 +1,9 @@
-import {useEffect, useState} from "react";
-import {Edit, Trash2, Plus, Search, Filter, Download, Menu, LogInIcon} from "lucide-react";
-import {Button} from "@/components/ui/button";
-import {Input} from "@/components/ui/input";
-import {Label} from "@/components/ui/label";
-import {Textarea} from "@/components/ui/textarea";
+import { useEffect, useState } from "react";
+import { Edit, Trash2, Search, Filter, Download, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -39,11 +39,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {Badge} from "@/components/ui/badge";
-import {Card, CardContent} from "@/components/ui/card";
-import {useSidebar} from "@/components/ui/sidebar";
-import {ThemeToggle} from "@/themeToggle/index";
-import {Formik, Form, Field, ErrorMessage} from "formik";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { useAppDispatch } from "@/hooks/use-dispatch";
 import { addTestCase, deleteTestCase, editTestCase, fetchTestCases, resetForm, selectError, selectLoading, selectTestCases, type TestCase } from "./reducer/testCaseSlice";
@@ -53,6 +51,8 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
 import { AuthDialog } from "@/auth/auth_dialog";
+import { Header } from "../topSection/index";
+
 type Priority = "High" | "Medium" | "Low";
 type Status = "Pass" | "Fail" | "Pending";
 
@@ -66,10 +66,10 @@ export function TestCaseManager({
   selectedFeature,
 }: TestCaseManagerProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
+  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
   const testCases = useSelector(selectTestCases);
   const [editingTestCase, setEditingTestCase] = useState<TestCase | null>(null);
-  const[isEditDialogueOpen, setIsEditDialogOpen] = useState(false);
+  const [isEditDialogueOpen, setIsEditDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
@@ -83,25 +83,23 @@ export function TestCaseManager({
   const dispatch = useAppDispatch();
   const loading = useSelector(selectLoading);
   const error = useSelector(selectError);
-  const {toggleSidebar} = useSidebar();
 
-  //Fetch DATA
-  useEffect(()=>{
+  // Fetch DATA
+  useEffect(() => {
     dispatch(fetchTestCases());
-  }, [dispatch, selectedFeature])
+  }, [dispatch, selectedFeature]);
 
-
-  //SUBMIT FORM FOR ADDING TEST CASE
+  // SUBMIT FORM FOR ADDING TEST CASE
   const validationSchema = Yup.object({
     test_case_id: Yup.string()
       .required("Test id required!")
       .matches(/^TC_\d+$/, 'ID must start with "TC_" followed by numbers (e.g., TC_01)'),
     description: Yup.string()
       .required("Description required!")
-      .min(10, "Description must be atleast 10 character!"),
+      .min(10, "Description must be at least 10 characters!"),
     featureId: Yup.string().required("Feature required!"),
     priority: Yup.string()
-      .required("Priority is reuqired!")
+      .required("Priority is required!")
       .oneOf(["High", "Medium", "Low"], "Invalid priority"),
     status: Yup.string().required("Status required!"),
   });
@@ -114,32 +112,32 @@ export function TestCaseManager({
     status: "Pending",
   };
 
-const handleUpdateTestCase = async(testCaseId: string) => {
-  try {
-    await dispatch(
-      editTestCase({
-        id: testCaseId,
-        data: {
-          test_case_id: newTestCase.test_case_id,
-          description: newTestCase.description,
-          priority: newTestCase.priority,
-          status: newTestCase.status,
-          featureId: newTestCase.featureId,
-        },
-      })
-    ).unwrap();
-    setEditingTestCase(null);
-    setIsEditDialogOpen(false);
-    dispatch(fetchTestCases()); // Re-fetch test cases after adding
-    toast.success("Test case updated successfully 👍")
-  } catch (error) {
-    console.error("Failed to update test case:", error);
-  }
+  const handleUpdateTestCase = async (testCaseId: string) => {
+    try {
+      await dispatch(
+        editTestCase({
+          id: testCaseId,
+          data: {
+            test_case_id: newTestCase.test_case_id,
+            description: newTestCase.description,
+            priority: newTestCase.priority,
+            status: newTestCase.status,
+            featureId: newTestCase.featureId,
+          },
+        })
+      ).unwrap();
+      setEditingTestCase(null);
+      setIsEditDialogOpen(false);
+      dispatch(fetchTestCases());
+      toast.success("Test case updated successfully 👍");
+    } catch (error) {
+      console.error("Failed to update test case:", error);
+    }
   };
 
-const handleEditTestCase = (testCase: TestCase) => {
-  setEditingTestCase(testCase);
-  setIsEditDialogOpen(true);
+  const handleEditTestCase = (testCase: TestCase) => {
+    setEditingTestCase(testCase);
+    setIsEditDialogOpen(true);
     setNewTestCase({
       test_case_id: testCase.test_case_id,
       description: testCase.description,
@@ -147,10 +145,10 @@ const handleEditTestCase = (testCase: TestCase) => {
       status: testCase.status as Status,
       featureId: testCase.featureId,
     });
-}
+  };
 
-  const handleSubmit = async(values: Omit<TestCase, 'loading' | 'error'>, {resetForm: resetFormikForm}: any) =>{
-    try{
+  const handleSubmit = async (values: Omit<TestCase, 'loading' | 'error'>, { resetForm: resetFormikForm }: any) => {
+    try {
       await dispatch(addTestCase({
         test_case_id: values.test_case_id,
         description: values.description,
@@ -161,20 +159,19 @@ const handleEditTestCase = (testCase: TestCase) => {
       dispatch(resetForm());
       resetFormikForm();
       setIsAddDialogOpen(false);
-      dispatch(fetchTestCases())
-      toast.success("Sucessfully added test case ✅")
-    }catch(error: any) {  
+      dispatch(fetchTestCases());
+      toast.success("Successfully added test case ✅");
+    } catch (error: any) {
       toast.error(`Error adding test case ${error?.message}`);
     }
-  }
+  };
 
-
-  const handleDeleteTestCase = async(testCaseId: string) => {
-    try{
+  const handleDeleteTestCase = async (testCaseId: string) => {
+    try {
       console.log(testCaseId);
       dispatch(deleteTestCase(testCaseId)).unwrap();
-      toast.success("Sucessfully deleted test case ✅")
-    }catch(error: any) {
+      toast.success("Successfully deleted test case ✅");
+    } catch (error: any) {
       toast.error("Error deleting test case", error);
     }
   };
@@ -186,27 +183,27 @@ const handleEditTestCase = (testCase: TestCase) => {
     const featureNameUpperCase = featureName.toUpperCase();
     doc.text(`TEST CASES FOR ${featureNameUpperCase}`, 14, 20);
 
-  autoTable(doc, {
-    startY: 30,
-    head: [["ID","Feature", "Description", "Priority", "Status"]],
-    body: filteredTestCases.map((tc) => [
-      tc.test_case_id,
-      tc.description,
-      tc.priority,
-      tc.status,
-    ]),
-    styles: {
-      fontSize: 10,
-      cellPadding: 3,
-    },
-    headStyles: {
-      fillColor: [40, 40, 40],
-    },
-  });
+    autoTable(doc, {
+      startY: 30,
+      head: [["ID", "Description", "Priority", "Status"]],
+      body: filteredTestCases.map((tc) => [
+        tc.test_case_id,
+        tc.description,
+        tc.priority,
+        tc.status,
+      ]),
+      styles: {
+        fontSize: 10,
+        cellPadding: 3,
+      },
+      headStyles: {
+        fillColor: [40, 40, 40],
+      },
+    });
 
     doc.save("test_cases.pdf");
-    setIsExportDialogOpen(false); // close the dialog after export
-  }
+    setIsExportDialogOpen(false);
+  };
 
   const getFeatureName = (featureId: string) => {
     const feature = features.find((f) => f._id === featureId);
@@ -219,64 +216,30 @@ const handleEditTestCase = (testCase: TestCase) => {
       testCase.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "All" || testCase.status === statusFilter;
     const matchesFeature = selectedFeature
-    ? String(testCase.featureId) === String(selectedFeature)
-    : true;
+      ? String(testCase.featureId) === String(selectedFeature)
+      : true;
     return matchesSearch && matchesStatus && matchesFeature;
   });
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <header className="flex h-16 shrink-0 items-center gap-4 border-b bg-white dark:bg-gray-800 px-6">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleSidebar}
-          className="-ml-1"
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
-        <div className="flex flex-1 items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white uppercase">
-              {selectedFeature ? getFeatureName(selectedFeature) : "Dashboard"}
-            </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              {selectedFeature
-                ? `Test cases for ${getFeatureName(selectedFeature)}`
-                : "Main dashboard and overview screens"}
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button
-              className="bg-black hover:bg-gray-800 text-white"
-              onClick={() =>  setIsAddDialogOpen(true)}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Create Test Case
-            </Button>
-            <ThemeToggle />
-            <Button className="bg-black hover:bg-gray-800 text-white" onClick={() => setIsAuthDialogOpen(true)}>
-              <LogInIcon className="h-4 w-4 mr-2" />
-              Login
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
+      <Header
+        selectedFeature={selectedFeature}
+        onAddTestCase={() => setIsAddDialogOpen(true)}
+        onCreateProject={() => setIsAuthDialogOpen(true)}
+        getFeatureName={getFeatureName}
+      />
       <div className="flex-1 p-6">
         <Card className="h-full overflow-y-auto">
           <CardContent className="p-6">
-            {/* Search and Filters */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-6 ">
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-600 " />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-600" />
                 <Input
                   placeholder="Search test cases..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 py-6 border border-gray-400"
+                  className="pl-10 py-6 border border-gray-300"
                 />
               </div>
               <div className="flex gap-2">
@@ -293,31 +256,30 @@ const handleEditTestCase = (testCase: TestCase) => {
                   </SelectContent>
                 </Select>
                 <AlertDialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
-                    <AlertDialogTrigger asChild className="py-6">
-                      <Button variant="outline">
-                        <Download className="h-4 w-4 mr-2" />
-                        Export to PDF
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Confirm Export</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to download the test cases as a PDF?
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleExportToPDF}>
-                          Yes, Download
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <AlertDialogTrigger asChild className="py-6">
+                    <Button variant="outline">
+                      <Download className="h-4 w-4 mr-2" />
+                      Export to PDF
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Confirm Export</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to download the test cases as a PDF?
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleExportToPDF}>
+                        Yes, Download
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </div>
 
-            {/* Table or Empty State */}
             {filteredTestCases.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <div className="text-6xl mb-4">📝</div>
@@ -330,7 +292,7 @@ const handleEditTestCase = (testCase: TestCase) => {
                     : "No test cases in Dashboard"}
                 </p>
                 <Button
-                  className="bg-black hover:bg-gray-800 text-white"
+                  className="border-white border-2 shadow-md shadow-gray-600 bg-black hover:bg-gray-800 text-white"
                   onClick={() => setIsAddDialogOpen(true)}
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -346,11 +308,10 @@ const handleEditTestCase = (testCase: TestCase) => {
                       <TableHead>Title</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Priority</TableHead>
-                      {/* <TableHead>Last Modified ↑</TableHead> */}
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody >
+                  <TableBody>
                     {filteredTestCases.map((testCase) => (
                       <TableRow key={testCase.test_case_id}>
                         <TableCell className="font-semibold">
@@ -368,12 +329,12 @@ const handleEditTestCase = (testCase: TestCase) => {
                           <Badge
                             variant={
                               testCase.status === "Fail"
-                                ? "destructive" // Red for Fail
+                                ? "destructive"
                                 : testCase.status === "Pass"
-                                ? "success" // Green for Pass
+                                ? "success"
                                 : testCase.status === "Pending"
-                                ? "warning" // Yellow for Pending
-                                : "secondary" // Fallback
+                                ? "warning"
+                                : "secondary"
                             }
                           >
                             {testCase.status}
@@ -381,7 +342,7 @@ const handleEditTestCase = (testCase: TestCase) => {
                         </TableCell>
                         <TableCell>
                           <Badge
-                          className="p-1"
+                            className="p-1"
                             variant={
                               testCase.priority === "High"
                                 ? "destructive"
@@ -397,13 +358,12 @@ const handleEditTestCase = (testCase: TestCase) => {
                           <div className="flex items-center gap-2">
                             <Dialog
                               open={isEditDialogueOpen && editingTestCase?._id === testCase._id}
-                              onOpenChange={(open) =>{
+                              onOpenChange={(open) => {
                                 if (!open) {
                                   setEditingTestCase(null);
                                   setIsEditDialogOpen(false);
-                                } 
-                              }
-                              }
+                                }
+                              }}
                             >
                               <DialogTrigger asChild>
                                 <Button
@@ -579,10 +539,10 @@ const handleEditTestCase = (testCase: TestCase) => {
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                                   <AlertDialogAction
                                     onClick={() => {
-                                          if (testCase._id) {
-                                            handleDeleteTestCase(testCase._id);
-                                          }
-                                        }}
+                                      if (testCase._id) {
+                                        handleDeleteTestCase(testCase._id);
+                                      }
+                                    }}
                                   >
                                     Delete
                                   </AlertDialogAction>
@@ -601,7 +561,6 @@ const handleEditTestCase = (testCase: TestCase) => {
         </Card>
       </div>
 
-      {/* Add Test Case Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -615,12 +574,10 @@ const handleEditTestCase = (testCase: TestCase) => {
             validationSchema={validationSchema}
             onSubmit={handleSubmit}
           >
-            {({isSubmitting}) => (
+            {({ isSubmitting }) => (
               <Form className="grid gap-4 py-4">
-                {/* Global Error Message */}
                 {error && <p className="text-red-500 text-sm">{error}</p>}
 
-                {/* Test Case ID */}
                 <div className="grid gap-2">
                   <Label htmlFor="id">Test Case ID</Label>
                   <Field
@@ -637,7 +594,6 @@ const handleEditTestCase = (testCase: TestCase) => {
                   />
                 </div>
 
-                {/* Description */}
                 <div className="grid gap-2">
                   <Label htmlFor="description">Description</Label>
                   <Field
@@ -655,17 +611,16 @@ const handleEditTestCase = (testCase: TestCase) => {
                   />
                 </div>
 
-                {/* Feature */}
                 <div className="grid gap-2">
                   <Label htmlFor="feature">Feature</Label>
                   <Field name="featureId">
-                    {({field, form}: any) => (
+                    {({ field, form }: any) => (
                       <Select
                         value={field.value}
                         onValueChange={(value) =>
                           form.setFieldValue("featureId", value)
                         }
-                        disabled={loading === true|| isSubmitting}
+                        disabled={loading === true || isSubmitting}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select a feature" />
@@ -687,13 +642,11 @@ const handleEditTestCase = (testCase: TestCase) => {
                   />
                 </div>
 
-                {/* Priority and Status */}
                 <div className="grid grid-cols-2 gap-4">
-                  {/* Priority */}
                   <div className="grid gap-2">
                     <Label htmlFor="priority">Priority</Label>
                     <Field name="priority">
-                      {({field, form}: any) => (
+                      {({ field, form }: any) => (
                         <Select
                           value={field.value}
                           onValueChange={(value) =>
@@ -719,11 +672,10 @@ const handleEditTestCase = (testCase: TestCase) => {
                     />
                   </div>
 
-                  {/* Status */}
                   <div className="grid gap-2">
                     <Label htmlFor="status">Status</Label>
                     <Field name="status">
-                      {({field, form}: any) => (
+                      {({ field, form }: any) => (
                         <Select
                           value={field.value}
                           onValueChange={(value) =>
