@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Edit, Trash2, Search, Filter, Download, Plus } from "lucide-react";
+import { Edit, Trash2, Search, Filter, Download, Plus, CheckCircle, Clock, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,6 +52,8 @@ import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
 import { CreateProjectDialog } from "@/project/index";
 import { Header } from "../topSection/index";
+import { Progress } from "@/components/ui/progress"
+import { TooltipProvider } from "@/components/ui/tooltip"
 
 type Priority = "High" | "Medium" | "Low";
 type Status = "Pass" | "Fail" | "Pending";
@@ -221,6 +223,18 @@ export function TestCaseManager({
     return matchesSearch && matchesStatus && matchesFeature;
   });
 
+  // Filter test cases for the selected feature:
+  const featureTestCases = selectedFeature
+    ? testCases.filter(tc => tc.featureId === selectedFeature)
+    : [];
+  const passed = featureTestCases.filter(tc => tc.status === "Pass").length;
+  const pending = featureTestCases.filter(tc => tc.status === "Pending").length;
+  const failed = featureTestCases.filter(tc => tc.status === "Fail").length;
+  const total = featureTestCases.length;
+  const percentPassed = total > 0 ? Math.round((passed / total) * 100) : 0;
+  const percentPending = total > 0 ? Math.round((pending / total) * 100) : 0;
+  const percentFailed = total > 0 ? Math.round((failed / total) * 100) : 0;
+
   return (
     <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
       <Header
@@ -229,90 +243,107 @@ export function TestCaseManager({
         onCreateProject={() => setIsAuthDialogOpen(true)}
         getFeatureName={getFeatureName}
       />
-      <div className="flex-1 p-6">
+      {/* Test Cases Overview as a separate card below the header */}
+      <div className="px-6 pt-4">
+        <TooltipProvider>
+          <div className="mb-6 pt-8 pb-8 px-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border border-blue-200 dark:border-blue-800 shadow-md">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-1">
+                Test Cases Overview
+              </h3>
+            </div>
+            {selectedFeature ? (
+              <>
+                <div className="grid grid-cols-3 gap-2 text-center mb-2">
+                  <div className="p-1 rounded bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 flex flex-col items-center">
+                    <div className="flex items-center justify-center gap-1">
+                      <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      <span className="text-base font-bold text-green-600 dark:text-green-400">{passed}</span>
+                    </div>
+                    <div className="text-xs text-green-600 dark:text-green-400 font-medium mt-0.5">Passed</div>
+                  </div>
+                  <div className="p-1 rounded bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-800 flex flex-col items-center">
+                    <div className="flex items-center justify-center gap-1">
+                      <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                      <span className="text-base font-bold text-yellow-600 dark:text-yellow-400">{pending}</span>
+                    </div>
+                    <div className="text-xs text-yellow-600 dark:text-yellow-400 font-medium mt-0.5">Pending</div>
+                  </div>
+                  <div className="p-1 rounded bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 flex flex-col items-center">
+                    <div className="flex items-center justify-center gap-1">
+                      <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                      <span className="text-base font-bold text-red-600 dark:text-red-400">{failed}</span>
+                    </div>
+                    <div className="text-xs text-red-600 dark:text-red-400 font-medium mt-0.5">Failed</div>
+                  </div>
+                </div>
+                <Progress value={percentPassed} className="h-1" />
+                <div className="flex justify-between text-[11px] mt-1 text-gray-600 dark:text-gray-400">
+                  <span>{percentPassed}% Passed</span>
+                  <span>{percentPending}% Pending</span>
+                  <span>{percentFailed}% Failed</span>
+                </div>
+              </>
+            ) : (
+              <div className="text-center text-xs text-gray-500 py-4">Select a feature to see test case overview.</div>
+            )}
+          </div>
+        </TooltipProvider>
+      </div>
+      {/* Table and controls remain in their own card below */}
+      <div className="flex-1 p-6 pt-0">
         <Card className="h-full overflow-y-auto">
           <CardContent className="p-6">
-            {/* Test Cases Summary */}
-            <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    Test Cases Overview
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {filteredTestCases.length} of {testCases.length} test cases shown
-                  </p>
-                </div>
-                <div className="flex gap-4 text-sm">
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-green-600 dark:text-green-400">
-                      {testCases.filter(tc => tc.status === "Pass").length}
-                    </div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400">Passed</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
-                      {testCases.filter(tc => tc.status === "Pending").length}
-                    </div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400">Pending</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-red-600 dark:text-red-400">
-                      {testCases.filter(tc => tc.status === "Fail").length}
-                    </div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400">Failed</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             {/* Enhanced Table Controls */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row gap-2 mb-3">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-600" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <Input
                   placeholder="Search test cases..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 py-3 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                  className="pl-9 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-md"
                 />
               </div>
-              <div className="flex gap-2">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-40 py-3 cursor-pointer border border-gray-400 focus:ring-2 focus:ring-blue-500">
-                    <Filter className="h-4 w-4 mr-2" />
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All">Status: All</SelectItem>
-                    <SelectItem value="Pass">Pass</SelectItem>
-                    <SelectItem value="Fail">Fail</SelectItem>
-                    <SelectItem value="Pending">Pending</SelectItem>
-                  </SelectContent>
-                </Select>
-                <AlertDialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="outline" className="py-3 px-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200">
-                      <Download className="h-4 w-4 mr-2" />
-                      Export to PDF
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Confirm Export</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to download the test cases as a PDF?
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleExportToPDF}>
-                        Yes, Download
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-32 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-md">
+                  <Filter className="h-4 w-4 mr-1" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All</SelectItem>
+                  <SelectItem value="Pass">Pass</SelectItem>
+                  <SelectItem value="Fail">Fail</SelectItem>
+                  <SelectItem value="Pending">Pending</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline" className="py-2 px-3 text-sm border border-gray-200 dark:border-gray-700 rounded-md" onClick={() => setIsAddDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-1" />
+                Add
+              </Button>
+              {/* In the table controls row, replace the Export button with the AlertDialog logic: */}
+              <AlertDialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" className="py-2 px-3 text-sm border border-gray-200 dark:border-gray-700 rounded-md">
+                    <Download className="h-4 w-4 mr-1" />
+                    Export
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Confirm Export</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to download the test cases as a PDF?
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleExportToPDF}>
+                      Yes, Download
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
 
             {filteredTestCases.length === 0 ? (
@@ -335,29 +366,29 @@ export function TestCaseManager({
                 </Button>
               </div>
             ) : (
-              <div className="md:max-h-[65vh] xl:max-h- overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
-                <Table className="sticky top-0 bg-white dark:bg-gray-900 z-10">
+              <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+                <Table className="bg-white dark:bg-gray-900 text-base w-full min-w-[900px]">
                   <TableHeader>
-                    <TableRow className="bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700">
-                      <TableHead className="font-semibold text-gray-900 dark:text-white py-4">Test Case ID</TableHead>
-                      <TableHead className="font-semibold text-gray-900 dark:text-white py-4">Description</TableHead>
-                      <TableHead className="font-semibold text-gray-900 dark:text-white py-4">Status</TableHead>
-                      <TableHead className="font-semibold text-gray-900 dark:text-white py-4">Priority</TableHead>
-                      <TableHead className="font-semibold text-gray-900 dark:text-white py-4 text-center">Actions</TableHead>
+                    <TableRow className="bg-gray-50 dark:bg-gray-800">
+                      <TableHead className="font-semibold text-lg text-gray-900 dark:text-white py-4 px-4">ID</TableHead>
+                      <TableHead className="font-semibold text-lg text-gray-900 dark:text-white py-4 px-4">Description</TableHead>
+                      <TableHead className="font-semibold text-lg text-gray-900 dark:text-white py-4 px-4">Status</TableHead>
+                      <TableHead className="font-semibold text-lg text-gray-900 dark:text-white py-4 px-4">Priority</TableHead>
+                      <TableHead className="font-semibold text-lg text-gray-900 dark:text-white py-4 px-4 text-center">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredTestCases.map((testCase, index) => (
-                      <TableRow 
+                      <TableRow
                         key={testCase.test_case_id}
-                        className={`hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200 ${
+                        className={`hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200 text-base ${
                           index % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/50 dark:bg-gray-800/50'
                         }`}
                       >
-                        <TableCell className="font-mono font-semibold text-blue-600 dark:text-blue-400 py-4">
+                        <TableCell className="font-mono font-semibold text-blue-600 dark:text-blue-400 py-4 px-4 text-base">
                           {testCase.test_case_id}
                         </TableCell>
-                        <TableCell className="max-w-xs py-4">
+                        <TableCell className="max-w-xs py-4 px-4 text-base">
                           <div
                             className="line-clamp-3 break-words whitespace-normal text-gray-700 dark:text-gray-300 leading-relaxed"
                             title={testCase.description}
@@ -365,7 +396,7 @@ export function TestCaseManager({
                             {testCase.description}
                           </div>
                         </TableCell>
-                        <TableCell className="py-4">
+                        <TableCell className="py-4 px-4 text-base">
                           <Badge
                             variant={
                               testCase.status === "Fail"
@@ -376,14 +407,14 @@ export function TestCaseManager({
                                 ? "warning"
                                 : "secondary"
                             }
-                            className="font-medium px-3 py-1"
+                            className="font-medium px-3 py-1 text-base"
                           >
                             {testCase.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="py-4">
+                        <TableCell className="py-4 px-4 text-base">
                           <Badge
-                            className="font-medium px-3 py-1"
+                            className="font-medium px-3 py-1 text-base"
                             variant={
                               testCase.priority === "High"
                                 ? "destructive"
@@ -395,7 +426,7 @@ export function TestCaseManager({
                             {testCase.priority}
                           </Badge>
                         </TableCell>
-                        <TableCell className="py-4">
+                        <TableCell className="py-4 px-4 text-base">
                           <div className="flex items-center justify-center gap-2">
                             <Dialog
                               open={isEditDialogueOpen && editingTestCase?._id === testCase._id}
@@ -410,10 +441,10 @@ export function TestCaseManager({
                                 <Button
                                   variant="ghost"
                                   size="sm"
+                                  className="h-9 w-9 p-0 hover:bg-blue-100 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400"
                                   onClick={() => handleEditTestCase(testCase)}
-                                  className="h-8 w-8 p-0 hover:bg-blue-100 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
                                 >
-                                  <Edit className="h-4 w-4" />
+                                  <Edit className="h-5 w-5" />
                                 </Button>
                               </DialogTrigger>
                               <DialogContent className="sm:max-w-[500px]">
@@ -563,12 +594,12 @@ export function TestCaseManager({
 
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button 
-                                  variant="ghost" 
+                                <Button
+                                  variant="ghost"
                                   size="sm"
-                                  className="h-8 w-8 p-0 hover:bg-red-100 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors duration-200"
+                                  className="h-9 w-9 p-0 hover:bg-red-100 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400"
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  <Trash2 className="h-5 w-5" />
                                 </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
