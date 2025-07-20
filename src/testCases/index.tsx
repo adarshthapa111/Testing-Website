@@ -428,7 +428,7 @@ export function TestCaseManager({
                                         })
                                       }
                                     >
-                                      <SelectTrigger>
+                                      <SelectTrigger className="w-full">
                                         <SelectValue placeholder="Select a feature" />
                                       </SelectTrigger>
                                       <SelectContent>
@@ -457,7 +457,7 @@ export function TestCaseManager({
                                           })
                                         }
                                       >
-                                        <SelectTrigger>
+                                        <SelectTrigger className="w-full">
                                           <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -486,7 +486,7 @@ export function TestCaseManager({
                                           })
                                         }
                                       >
-                                        <SelectTrigger>
+                                        <SelectTrigger className="w-full">
                                           <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -611,7 +611,7 @@ export function TestCaseManager({
                   />
                 </div>
 
-                <div className="grid gap-2">
+                <div className="grid gap-2 w-full">
                   <Label htmlFor="feature">Feature</Label>
                   <Field name="featureId">
                     {({ field, form }: any) => (
@@ -622,7 +622,7 @@ export function TestCaseManager({
                         }
                         disabled={loading === true || isSubmitting}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select a feature" />
                         </SelectTrigger>
                         <SelectContent>
@@ -645,16 +645,14 @@ export function TestCaseManager({
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="priority">Priority</Label>
-                    <Field name="priority">
+                    < Field name="priority">
                       {({ field, form }: any) => (
                         <Select
                           value={field.value}
-                          onValueChange={(value) =>
-                            form.setFieldValue("priority", value)
-                          }
+                          onValueChange={(value) => form.setFieldValue("priority", value)}
                           disabled={loading === true || isSubmitting}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger className="w-full">
                             <SelectValue placeholder="Select priority" />
                           </SelectTrigger>
                           <SelectContent>
@@ -678,12 +676,10 @@ export function TestCaseManager({
                       {({ field, form }: any) => (
                         <Select
                           value={field.value}
-                          onValueChange={(value) =>
-                            form.setFieldValue("status", value)
-                          }
+                          onValueChange={(value) => form.setFieldValue("status", value)}
                           disabled={loading === true || isSubmitting}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger className="w-full">
                             <SelectValue placeholder="Select status" />
                           </SelectTrigger>
                           <SelectContent>
