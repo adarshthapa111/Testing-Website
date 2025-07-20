@@ -50,7 +50,7 @@ import { type Feature } from "@/sidebar/reducer/sidebarSlice";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
-import { AuthDialog } from "@/auth/auth_dialog";
+import { CreateProjectDialog } from "@/project/index";
 import { Header } from "../topSection/index";
 
 type Priority = "High" | "Medium" | "Low";
@@ -232,6 +232,41 @@ export function TestCaseManager({
       <div className="flex-1 p-6">
         <Card className="h-full overflow-y-auto">
           <CardContent className="p-6">
+            {/* Test Cases Summary */}
+            <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Test Cases Overview
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {filteredTestCases.length} of {testCases.length} test cases shown
+                  </p>
+                </div>
+                <div className="flex gap-4 text-sm">
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-green-600 dark:text-green-400">
+                      {testCases.filter(tc => tc.status === "Pass").length}
+                    </div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">Passed</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
+                      {testCases.filter(tc => tc.status === "Pending").length}
+                    </div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">Pending</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-red-600 dark:text-red-400">
+                      {testCases.filter(tc => tc.status === "Fail").length}
+                    </div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">Failed</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Enhanced Table Controls */}
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-600" />
@@ -239,12 +274,12 @@ export function TestCaseManager({
                   placeholder="Search test cases..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 py-6 border border-gray-300"
+                  className="pl-10 py-3 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                 />
               </div>
               <div className="flex gap-2">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-40 py-6 cursor-pointer border border-gray-400">
+                  <SelectTrigger className="w-40 py-3 cursor-pointer border border-gray-400 focus:ring-2 focus:ring-blue-500">
                     <Filter className="h-4 w-4 mr-2" />
                     <SelectValue />
                   </SelectTrigger>
@@ -256,8 +291,8 @@ export function TestCaseManager({
                   </SelectContent>
                 </Select>
                 <AlertDialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
-                  <AlertDialogTrigger asChild className="py-6">
-                    <Button variant="outline">
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" className="py-3 px-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200">
                       <Download className="h-4 w-4 mr-2" />
                       Export to PDF
                     </Button>
@@ -300,32 +335,37 @@ export function TestCaseManager({
                 </Button>
               </div>
             ) : (
-              <div className="md:max-h-[65vh] xl:max-h- overflow-y-auto">
+              <div className="md:max-h-[65vh] xl:max-h- overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
                 <Table className="sticky top-0 bg-white dark:bg-gray-900 z-10">
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Priority</TableHead>
-                      <TableHead>Actions</TableHead>
+                    <TableRow className="bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700">
+                      <TableHead className="font-semibold text-gray-900 dark:text-white py-4">Test Case ID</TableHead>
+                      <TableHead className="font-semibold text-gray-900 dark:text-white py-4">Description</TableHead>
+                      <TableHead className="font-semibold text-gray-900 dark:text-white py-4">Status</TableHead>
+                      <TableHead className="font-semibold text-gray-900 dark:text-white py-4">Priority</TableHead>
+                      <TableHead className="font-semibold text-gray-900 dark:text-white py-4 text-center">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredTestCases.map((testCase) => (
-                      <TableRow key={testCase.test_case_id}>
-                        <TableCell className="font-semibold">
+                    {filteredTestCases.map((testCase, index) => (
+                      <TableRow 
+                        key={testCase.test_case_id}
+                        className={`hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200 ${
+                          index % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/50 dark:bg-gray-800/50'
+                        }`}
+                      >
+                        <TableCell className="font-mono font-semibold text-blue-600 dark:text-blue-400 py-4">
                           {testCase.test_case_id}
                         </TableCell>
-                        <TableCell className="max-w-xs">
+                        <TableCell className="max-w-xs py-4">
                           <div
-                            className="line-clamp-3 break-words whitespace-normal"
+                            className="line-clamp-3 break-words whitespace-normal text-gray-700 dark:text-gray-300 leading-relaxed"
                             title={testCase.description}
                           >
                             {testCase.description}
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="py-4">
                           <Badge
                             variant={
                               testCase.status === "Fail"
@@ -336,13 +376,14 @@ export function TestCaseManager({
                                 ? "warning"
                                 : "secondary"
                             }
+                            className="font-medium px-3 py-1"
                           >
                             {testCase.status}
                           </Badge>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="py-4">
                           <Badge
-                            className="p-1"
+                            className="font-medium px-3 py-1"
                             variant={
                               testCase.priority === "High"
                                 ? "destructive"
@@ -354,8 +395,8 @@ export function TestCaseManager({
                             {testCase.priority}
                           </Badge>
                         </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
+                        <TableCell className="py-4">
+                          <div className="flex items-center justify-center gap-2">
                             <Dialog
                               open={isEditDialogueOpen && editingTestCase?._id === testCase._id}
                               onOpenChange={(open) => {
@@ -370,6 +411,7 @@ export function TestCaseManager({
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleEditTestCase(testCase)}
+                                  className="h-8 w-8 p-0 hover:bg-blue-100 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
@@ -521,7 +563,11 @@ export function TestCaseManager({
 
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="sm">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  className="h-8 w-8 p-0 hover:bg-red-100 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors duration-200"
+                                >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               </AlertDialogTrigger>
@@ -714,7 +760,7 @@ export function TestCaseManager({
           </Formik>
         </DialogContent>
       </Dialog>
-      <AuthDialog isOpen={isAuthDialogOpen} onOpenChange={setIsAuthDialogOpen} />
+      <CreateProjectDialog isOpen={isAuthDialogOpen} onOpenChange={setIsAuthDialogOpen} />
     </div>
   );
 }

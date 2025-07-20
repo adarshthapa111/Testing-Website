@@ -44,6 +44,7 @@ import { useSelector } from "react-redux"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { useFeaturesWithCounts } from "../hooks/use-test-count"
+import { Progress } from "@/components/ui/progress"
 
 
 interface Feature {
@@ -159,6 +160,10 @@ export function Sidebar({ selectedFeature, setSelectedFeature }: AppSidebarProps
     { totalFeatures: 0, totalTests: 0, totalPassed: 0, totalFailed: 0, totalPending: 0 },
   )
 
+  const overallProgress = overallStats.totalTests > 0 
+    ? Math.round((overallStats.totalPassed / overallStats.totalTests) * 100) 
+    : 0
+
   if (!open) return null
 
   return (
@@ -177,21 +182,34 @@ export function Sidebar({ selectedFeature, setSelectedFeature }: AppSidebarProps
           </div>
         </div>
 
-        {/* Overall Statistics */}
+        {/* Enhanced Overall Statistics */}
         {overallStats.totalTests > 0 && (
-          <div className="mb-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <div>
-                <div className="text-lg font-bold text-green-600">{overallStats.totalPassed}</div>
-                <div className="text-xs text-slate-600 dark:text-slate-400">Passed</div>
+          <div className="mb-6 p-4 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800/50 dark:to-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Overall Progress</h3>
+              <div className="text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded-full">
+                {overallProgress}% Complete
               </div>
-              <div>
-                <div className="text-lg font-bold text-yellow-600">{overallStats.totalPending}</div>
-                <div className="text-xs text-slate-600 dark:text-slate-400">Pending</div>
+            </div>
+            <Progress value={overallProgress} className="h-2 mb-4" />
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="p-2 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                <div className="text-lg font-bold text-green-600 dark:text-green-400">{overallStats.totalPassed}</div>
+                <div className="text-xs text-green-600 dark:text-green-400 font-medium">Passed</div>
               </div>
-              <div>
-                <div className="text-lg font-bold text-red-600">{overallStats.totalFailed}</div>
-                <div className="text-xs text-slate-600 dark:text-slate-400">Failed</div>
+              <div className="p-2 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
+                <div className="text-lg font-bold text-yellow-600 dark:text-yellow-400">{overallStats.totalPending}</div>
+                <div className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">Pending</div>
+              </div>
+              <div className="p-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                <div className="text-lg font-bold text-red-600 dark:text-red-400">{overallStats.totalFailed}</div>
+                <div className="text-xs text-red-600 dark:text-red-400 font-medium">Failed</div>
+              </div>
+            </div>
+            <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-600">
+              <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400">
+                <span>Total Features: {overallStats.totalFeatures}</span>
+                <span>Total Tests: {overallStats.totalTests}</span>
               </div>
             </div>
           </div>
