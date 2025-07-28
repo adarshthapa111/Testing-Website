@@ -8,6 +8,7 @@ export interface Feature {
   name: string;
   description: string;
   icon: string;
+  projectId?: string;
   testCounts: {
     passed: number;
     failed: number;
@@ -31,12 +32,13 @@ const initialState: FeatureState = {
 
 export const addFeature = createAsyncThunk(
   "features/addFeature", // Fixed action type
-  async (feature: Omit<Feature, "id">, {rejectWithValue}) => {
+  async (feature: Omit<Feature, "_id" | "testCounts">, {rejectWithValue}) => {
     try {
       const response = await axios.post(`${BASE_URL}/features`, {
         name: feature.name,
         description: feature.description,
-        icon: feature.icon
+        icon: feature.icon,
+        projectId: feature.projectId
       });
       return response.data;
     } catch (error: any) {
