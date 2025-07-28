@@ -77,6 +77,8 @@ export function ProjectDetails({ projectId, onBack, onFeatureClick }: ProjectDet
       toast.success("Feature created successfully!")
       resetForm()
       setIsCreateFeatureOpen(false)
+      // Refetch features to get updated test counts
+      dispatch(fetchFeatures())
     } catch (error: any) {
       toast.error(error.message || "Failed to create feature")
     }
@@ -86,6 +88,8 @@ export function ProjectDetails({ projectId, onBack, onFeatureClick }: ProjectDet
     try {
       await dispatch(deleteFeature(featureId)).unwrap()
       toast.success("Feature deleted successfully!")
+      // Refetch features to get updated test counts
+      dispatch(fetchFeatures())
     } catch (error: any) {
       toast.error(error.message || "Failed to delete feature")
     }

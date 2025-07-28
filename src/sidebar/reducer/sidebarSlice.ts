@@ -84,7 +84,8 @@ const sidebarSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(addFeature.fulfilled, (state) => {
+      .addCase(addFeature.fulfilled, (state, action) => {
+        state.features.push(action.payload);
         state.loading = false;
         state.error = "";
       })

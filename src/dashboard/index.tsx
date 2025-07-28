@@ -4,7 +4,7 @@ import { Sidebar } from "@/sidebar/index"
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { ThemeProvider } from "@/themeToggle/themeProvider"
 import { useSelector } from "react-redux"
-import { selectFeatures } from "@/sidebar/reducer/sidebarSlice"
+import { selectFeatures } from "@/sidebar/reducer/sidebarSlice.ts"
 import { selectProjects, selectProjectLoading, fetchProject } from "@/project/reducer/projectSlice"
 import { useAppDispatch } from "@/hooks/use-dispatch"
 import { HomePage } from "./homePage.tsx"
@@ -27,7 +27,8 @@ export default function Dashboard() {
   }, [dispatch]);
 
   useEffect(()=>{
-    if(!selectedFeature && features.length > 0 && currentView !== 'home' && currentView !== 'projects' && currentView !== 'projectDetails') {
+    // Only auto-select a feature if we're in testcases view and no feature is selected
+    if(!selectedFeature && features.length > 0 && currentView === 'testcases') {
       setSelectedFeature(features[0]._id)
     }
   }, [features, selectedFeature, currentView])
@@ -111,7 +112,7 @@ export default function Dashboard() {
                 onBack={handleBackFromProjectDetails}
                 onFeatureClick={handleFeatureClick}
               />
-            ) : selectedFeature && (
+            ) : currentView === 'testcases' && selectedFeature && (
               <TestCaseManager
                 features={features}
                 selectedFeature={selectedFeature}
