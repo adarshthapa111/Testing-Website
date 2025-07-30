@@ -44,12 +44,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { useAppDispatch } from "@/hooks/use-dispatch";
-import { addTestCase, deleteTestCase, fetchTestCases, selectTestCases, type TestCase } from "./reducer/testCaseSlice";
+import { addTestCase, deleteTestCase, fetchTestCases, selectTestCases, selectLoading, type TestCase } from "./reducer/testCaseSlice";
 import { useSelector } from "react-redux";
 import { type Feature } from "@/sidebar/reducer/sidebarSlice";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
+import { TestCaseTableSkeleton } from "@/components/ui/tableLoader";
 
 type Priority = "High" | "Medium" | "Low";
 type Status = "Pass" | "Fail" | "Pending";
@@ -67,6 +68,7 @@ export function TestCaseManager({
 }: TestCaseManagerProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const testCases = useSelector(selectTestCases);
+  const loading = useSelector(selectLoading);
   const [editingTestCase, setEditingTestCase] = useState<TestCase | null>(null);
   const [isEditDialogueOpen, setIsEditDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -193,7 +195,7 @@ export function TestCaseManager({
       {/* Header */}
       <div className="flex-shrink-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm">
         <div className="px-6 py-6">
-          <div className="max-w-7xl mx-auto">
+          <div className="w-full">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-6">
                 {selectedFeature && onBackToFeatures && (
@@ -233,7 +235,7 @@ export function TestCaseManager({
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
         <div className="px-6 py-8">
-          <div className="max-w-7xl mx-auto">
+          <div className="w-full">
             
             {/* Search and Filters */}
             <div className="mb-6">
@@ -288,7 +290,9 @@ export function TestCaseManager({
             </div>
 
             {/* Test Cases Table */}
-            {filteredTestCases.length === 0 ? (
+            {loading ? (
+              <TestCaseTableSkeleton />
+            ) : filteredTestCases.length === 0 ? (
               <div className="text-center py-16">
                 <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 flex items-center justify-center">
                   <FlaskConical className="h-12 w-12 text-blue-600 dark:text-blue-400" />

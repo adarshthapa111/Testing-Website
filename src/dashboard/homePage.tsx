@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress"
 import { ProjectGridSkeleton } from "@/components/ui/project-skeleton"
 import { StatsGridSkeleton } from "@/components/ui/stats-skeleton"
 import { 
-  Plus, 
+  Plus,
   Folder, 
   FlaskConical, 
   BarChart3, 
@@ -21,7 +21,8 @@ import {
   Bell,
   ArrowRight,
   Target,
-  Award
+  Award,
+  User
 } from "lucide-react"
 import { useSelector } from "react-redux"
 import { selectTestCases } from "@/testCases/reducer/testCaseSlice"
@@ -53,7 +54,7 @@ export function HomePage({ projects, loading = false, onProjectClick, onProjects
       {/* Sticky Header */}
       <div className="flex-shrink-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm">
         <div className="px-6 py-6">
-          <div className="max-w-7xl mx-auto">
+          <div className="w-full">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
@@ -66,9 +67,9 @@ export function HomePage({ projects, loading = false, onProjectClick, onProjects
                   <Bell className="h-4 w-4 mr-2" />
                   Notifications
                 </Button>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Project
+                <Button variant="outline" className="border-2">
+                  <User className="h-4 w-4 mr-2" />
+                  Login
                 </Button>
               </div>
             </div>
@@ -79,7 +80,7 @@ export function HomePage({ projects, loading = false, onProjectClick, onProjects
       {/* Scrollable Main Content */}
       <div className="flex-1 overflow-auto">
         <div className="px-6 py-8">
-          <div className="max-w-7xl mx-auto">
+          <div className="w-full">
             
             {/* Overview Stats */}
             {loading ? (
@@ -148,77 +149,80 @@ export function HomePage({ projects, loading = false, onProjectClick, onProjects
               </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
               
               {/* Projects Section */}
-              <Card className="lg:col-span-2 border-0 shadow-xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-xl">
-                    <Folder className="h-5 w-5 text-blue-600" />
-                    Your Projects
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {loading ? (
-                    <ProjectGridSkeleton />
-                  ) : recentProjects.length === 0 ? (
-                    <div className="text-center py-12">
-                      <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 flex items-center justify-center">
-                        <Folder className="h-10 w-10 text-blue-600 dark:text-blue-400" />
-                      </div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No projects yet</h3>
-                      <p className="text-gray-500 dark:text-gray-400 mb-6">Create your first project to get started</p>
-                      <Button 
-                        className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Create First Project
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {recentProjects.map((project) => (
-                        <div 
-                          key={project._id}
-                          className="group p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-lg transition-all duration-300 cursor-pointer bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-700 hover:from-blue-50 hover:to-blue-100 dark:hover:from-blue-900/20 dark:hover:to-blue-800/20"
-                          onClick={() => onProjectClick(project._id)}
-                        >
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 text-white">
-                                <Folder className="h-5 w-5" />
-                              </div>
-                              <div>
-                                <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                                  {project.name}
-                                </h3>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                                  {project.description}
-                                </p>
-                              </div>
-                            </div>
-                            <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
-                          </div>
-                          
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400">
-                                Active
-                              </Badge>
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              Created {new Date(project.createdAt).toLocaleDateString()}
-                            </div>
-                          </div>
+              <div className="xl:col-span-2">
+                <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm h-full">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-xl">
+                      <Folder className="h-5 w-5 text-blue-600" />
+                      Your Projects
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {loading ? (
+                      <ProjectGridSkeleton />
+                    ) : recentProjects.length === 0 ? (
+                      <div className="text-center py-12">
+                        <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 flex items-center justify-center">
+                          <Folder className="h-10 w-10 text-blue-600 dark:text-blue-400" />
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No projects yet</h3>
+                        <p className="text-gray-500 dark:text-gray-400 mb-6">Create your first project to get started</p>
+                        <Button 
+                          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create First Project
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {recentProjects.map((project) => (
+                          <div 
+                            key={project._id}
+                            className="group p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-lg transition-all duration-300 cursor-pointer bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-700 hover:from-blue-50 hover:to-blue-100 dark:hover:from-blue-900/20 dark:hover:to-blue-800/20"
+                            onClick={() => onProjectClick(project._id)}
+                          >
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 text-white">
+                                  <Folder className="h-5 w-5" />
+                                </div>
+                                <div>
+                                  <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                    {project.name}
+                                  </h3>
+                                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                                    {project.description}
+                                  </p>
+                                </div>
+                              </div>
+                              <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                            </div>
+                            
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400">
+                                  Active
+                                </Badge>
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                Created {new Date(project.createdAt).toLocaleDateString()}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
 
               {/* Quick Actions & Stats */}
-              <div className="space-y-6">
+              <div className="xl:col-span-1">
+                <div className="space-y-6 sticky top-6">
                 {/* Quick Actions */}
                 <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
                   <CardHeader>
@@ -341,6 +345,7 @@ export function HomePage({ projects, loading = false, onProjectClick, onProjects
                     </div>
                   </CardContent>
                 </Card>
+                </div>
               </div>
             </div>
 

@@ -13,12 +13,13 @@ import {
 } from "lucide-react"
 import { useEffect } from "react"
 import { useSelector } from "react-redux"
-import { selectProjects, fetchProject, deleteProject } from "./reducer/projectSlice"
+import { selectProjects, selectProjectLoading, fetchProject, deleteProject } from "./reducer/projectSlice"
 import { type Project } from "./reducer/projectSlice"
 import { CreateProjectDialog } from "./index.tsx"
 import { useAppDispatch } from "@/hooks/use-dispatch"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
+import { ProjectGridSkeleton } from "@/components/ui/project-skeleton"
 
 interface ProjectsPageProps {
   onProjectClick?: (projectId: string) => void
@@ -28,6 +29,7 @@ interface ProjectsPageProps {
 export function ProjectsPage({ onProjectDetailsClick }: ProjectsPageProps) {
   const dispatch = useAppDispatch()
   const projects: Project[] = useSelector(selectProjects)
+  const loading = useSelector(selectProjectLoading)
   const [searchQuery, setSearchQuery] = useState("")
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false)
   const [editingProject, setEditingProject] = useState<Project | null>(null)
@@ -56,7 +58,7 @@ export function ProjectsPage({ onProjectDetailsClick }: ProjectsPageProps) {
       {/* Sticky Header */}
       <div className="flex-shrink-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm">
         <div className="px-6 py-6">
-          <div className="max-w-7xl mx-auto">
+          <div className="w-full">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Projects</h1>
@@ -81,7 +83,7 @@ export function ProjectsPage({ onProjectDetailsClick }: ProjectsPageProps) {
       {/* Scrollable Main Content */}
       <div className="flex-1 overflow-auto">
         <div className="px-6 py-8">
-          <div className="max-w-7xl mx-auto">
+          <div className="w-full">
             
             {/* Search and Stats */}
             <div className="mb-8">
@@ -102,7 +104,9 @@ export function ProjectsPage({ onProjectDetailsClick }: ProjectsPageProps) {
             </div>
 
             {/* Projects Grid */}
-            {filteredProjects.length === 0 ? (
+            {loading ? (
+              <ProjectGridSkeleton />
+            ) : filteredProjects.length === 0 ? (
               <div className="text-center py-16">
                 <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 flex items-center justify-center">
                   <Folder className="h-12 w-12 text-blue-600 dark:text-blue-400" />

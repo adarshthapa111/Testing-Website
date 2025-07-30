@@ -15,12 +15,13 @@ import {
 } from "lucide-react"
 import { useSelector } from "react-redux"
 import { selectProjects } from "./reducer/projectSlice"
-import { selectFeatures, addFeature, fetchFeatures, deleteFeature } from "@/sidebar/reducer/sidebarSlice"
+import { selectFeatures, selectLoading, addFeature, fetchFeatures, deleteFeature } from "@/sidebar/reducer/sidebarSlice"
 import { type Project } from "./reducer/projectSlice"
 import { type Feature } from "@/sidebar/reducer/sidebarSlice"
 import { useAppDispatch } from "@/hooks/use-dispatch"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
+import { FeatureGridSkeleton } from "@/components/ui/featureSkeleton"
 import {
   Dialog,
   DialogContent,
@@ -57,6 +58,7 @@ export function ProjectDetails({ projectId, onBack, onFeatureClick }: ProjectDet
   const dispatch = useAppDispatch()
   const projects: Project[] = useSelector(selectProjects)
   const features: Feature[] = useSelector(selectFeatures)
+  const loading = useSelector(selectLoading)
   const [searchQuery, setSearchQuery] = useState("")
   const [isCreateFeatureOpen, setIsCreateFeatureOpen] = useState(false)
 
@@ -111,7 +113,7 @@ export function ProjectDetails({ projectId, onBack, onFeatureClick }: ProjectDet
       {/* Header */}
       <div className="flex-shrink-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm">
         <div className="px-6 py-6">
-          <div className="max-w-7xl mx-auto">
+          <div className="w-full">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-6">
                 <button
@@ -146,7 +148,7 @@ export function ProjectDetails({ projectId, onBack, onFeatureClick }: ProjectDet
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
         <div className="px-6 py-8">
-          <div className="max-w-7xl mx-auto">
+          <div className="w-full">
             
             {/* Project Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -236,7 +238,9 @@ export function ProjectDetails({ projectId, onBack, onFeatureClick }: ProjectDet
             </div>
 
             {/* Features List */}
-            {filteredFeatures.length === 0 ? (
+            {loading ? (
+              <FeatureGridSkeleton />
+            ) : filteredFeatures.length === 0 ? (
               <div className="text-center py-16">
                 <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 flex items-center justify-center">
                   <FlaskConical className="h-12 w-12 text-blue-600 dark:text-blue-400" />
