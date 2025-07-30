@@ -194,7 +194,7 @@ export function TestCaseManager({
     <div className="h-full flex flex-col bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
       {/* Header */}
       <div className="flex-shrink-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm">
-        <div className="px-6 py-6">
+        <div className="px-6 py-4">
           <div className="w-full">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-6">
@@ -209,8 +209,8 @@ export function TestCaseManager({
                 )}
                 <div className="h-6 w-px bg-gray-300 dark:bg-gray-600"></div>
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Test Cases</h1>
-                  <p className="text-gray-600 dark:text-gray-400 mt-2">
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Test Cases</h1>
+                  <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">
                     {selectedFeatureData 
                       ? `Managing test cases for ${selectedFeatureData.name}`
                       : "All test cases in the system"
